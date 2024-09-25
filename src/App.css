@@ -1,0 +1,4 @@
+.bft-familytree > *:last-child{
+    display: none;
+}
+
