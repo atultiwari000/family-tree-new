@@ -1,6 +1,6 @@
 import React from 'react';
 import './App.css';
-import FamilyTreeComponent from './component/FamilyTree';
+import FamilyTreeComponent from './custom-component/FamilyTree';
 import Ambika from "@/assets/images/ambika.png"
 import hariMaya from "@/assets/images/hari-maya.png"
 
@@ -16,11 +16,14 @@ import rikhi from "@/assets/images/rikhi.png"
 import subhash from "@/assets/images/subhash.png"
 import sarswati from "@/assets/images/sarswati.png"
 import avatar from "@/assets/images/avatar.png"
+import LoginModal from './components/login-modal';
+import useFamilyStore from './store/globalFamily';
 
 
 
 
 const App: React.FC = () => {
+  const isOpen = useFamilyStore(state => state.isOpen)
   const nodes = [
     {id: 1, name:"Rikhi Ram Lc",pids:[2], gender:"male", img:rikhi},
     {id: 2, name:"Hari Maya Lc", pids:[1], gender:"female", img:hariMaya},
@@ -50,6 +53,7 @@ const App: React.FC = () => {
   return (
     <div className="App">
       <FamilyTreeComponent nodes={nodes} />
+      <LoginModal isOpen={isOpen}/>
     </div>
   );
 };
