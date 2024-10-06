@@ -1,4 +1,13 @@
-.bft-familytree > *:last-child{
-    display: none;
+.bft-familytree > *:last-child {
+  display: none;
 }
 
+#family-tree {
+  width: 70%;
+  height: 600px;
+  background-color: lightgray; /* for debugging */
+}
+
+.bfc-colorbar {
+  display: none !important;
+}
