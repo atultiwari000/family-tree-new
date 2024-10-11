@@ -4,6 +4,7 @@ import {Button} from '@/components/ui/button';
 import {Avatar, AvatarImage, AvatarFallback} from '@/components/ui/avatar';
 
 import { auth} from '@/firebase';
+import useFamilyStore from '@/store/globalFamily';
 
 
 
@@ -12,7 +13,8 @@ import { auth} from '@/firebase';
 const provider = new GoogleAuthProvider();
 
 const LoginUI: React.FC = () => {
-  const [user, setUser] = useState<any>(null);
+  const user =  useFamilyStore((state) => state.user);
+  const setUser = useFamilyStore((state) => state.setUser);
 
   useEffect(() => {
     onAuthStateChanged(auth, (currentUser) => {

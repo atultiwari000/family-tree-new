@@ -12,6 +12,7 @@ import {
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
 import { DebugInfo } from "./DebugInfo";
+import useFamilyStore from "@/store/globalFamily";
 
 const FamilyTreeComponent: React.FC = () => {
   const divRef = useRef<HTMLDivElement>(null);
@@ -19,6 +20,8 @@ const FamilyTreeComponent: React.FC = () => {
   const { nodes, loading, error } = useFamilyTree();
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>("");
+
+  const user = useFamilyStore((state) => state.user);
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
@@ -157,10 +160,11 @@ const FamilyTreeComponent: React.FC = () => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       <div
-        className="w-full md:w-3/4 h-full"
+        className={"w-full h-full " +  (user ? "md:w-3/4" : "")}
         style={{ height: "100vh" }}
         ref={divRef}
       ></div>
+      {user && (
       <div className="w-full md:w-1/4 p-4 bg-gray-100">
         <div className="mb-4">
           <label htmlFor="rootNodeSelect" className="block mb-2">
@@ -200,6 +204,8 @@ const FamilyTreeComponent: React.FC = () => {
         )}
         <DebugInfo info={debugInfo} nodeCount={nodes.length} />
       </div>
+      )
+    }
     </div>
   );
 };
