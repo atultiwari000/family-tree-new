@@ -13,8 +13,7 @@ import {
 import { FamilyMember } from "@/types/familyTypes";
 import { DebugInfo } from "./DebugInfo";
 import useFamilyStore from "@/store/globalFamily";
-
-import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
+import { GearIcon, Cross1Icon, TrashIcon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
 
 const FamilyTreeComponent: React.FC = () => {
@@ -24,11 +23,12 @@ const FamilyTreeComponent: React.FC = () => {
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>("");
   const { toast } = useToast();
-
+  const [isRemoveFormOpen, setIsRemoveFormOpen] = useState(false);
   const user = useFamilyStore((state) => state.user);
-
+  const [selectedRemoveMemberId, setSelectedRemoveMemberId] = useState<
+    string | null
+  >(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-
   const [isSetting, setIsSetting] = useState(false);
 
   useEffect(() => {
@@ -46,31 +46,36 @@ const FamilyTreeComponent: React.FC = () => {
   useEffect(() => {
     if (divRef.current && nodes.length > 0 && !loading) {
       try {
-        if (familyTreeRef.current) {
+        if (
+          familyTreeRef.current &&
+          typeof familyTreeRef.current.destroy === "function"
+        ) {
           familyTreeRef.current.destroy();
+
           divRef.current.innerHTML = "";
         }
 
-        let newNode = nodes.map((node) => {
-          let obj = {
-            id: node.id,
-            name: node.name ?? "",
-            gender: node.gender ?? "",
-          };
-          if (node.img) {
-            obj["img"] = node.img;
-          }
-          if (node.fid?.length > 0) {
-            obj["fid"] = node.fid;
-          }
-          if (node.mid?.length > 0) {
-            obj["mid"] = node.mid;
-          }
-          if (node.pids) {
-            obj["pids"] = node.pids;
-          }
-          return obj;
-        });
+        let newNode = nodes.map((node) => ({
+          id: node.id,
+          name: node.name ?? "",
+          gender: node.gender ?? "",
+          img: node.img,
+          fid: node.fid?.length > 0 ? node.fid[0] : undefined,
+          mid: node.mid?.length > 0 ? node.mid[0] : undefined,
+          pids: node.pids,
+        }));
+
+        FamilyTree.templates.myTemplate = Object.assign(
+          {},
+          FamilyTree.templates.tommy
+        );
+        FamilyTree.templates.myTemplate.node =
+          '<circle cx="50" cy="50" r="40" fill="#039BE5" stroke="#AEAEAE" stroke-width="1"></circle>' +
+          '<g style="cursor: pointer;" transform="matrix(0,0,0,0,100,100)" class="remove-btn">' +
+          '<circle cx="0" cy="0" r="12" fill="#FF0000" stroke="#FFFFFF" stroke-width="2"></circle>' +
+          "</g>";
+
+        FamilyTree.templates.myTemplate.nodeMenuButton = "";
 
         const f = new FamilyTree(divRef.current, {
           nodes: newNode,
@@ -85,13 +90,21 @@ const FamilyTreeComponent: React.FC = () => {
           toolbar: {
             zoom: true,
             fit: true,
+            expandAll: false,
           },
           roots: selectedNode ? [selectedNode] : [],
         });
 
+        f.on("click", function (sender, args) {
+          if (args.node && args.event.target.closest(".remove-btn")) {
+            handleRemove(args.node.id);
+            return false;
+          }
+        });
+
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
-
+        console.log(f);
         setDebugInfo("Family tree initialized successfully");
       } catch (err) {
         console.error("Error initializing family tree:", err);
@@ -100,7 +113,7 @@ const FamilyTreeComponent: React.FC = () => {
     }
   }, [nodes, loading]);
 
-  function showPremissionToast() {
+  function showPermissionToast() {
     toast({
       title: "Insufficient permissions",
       description: "please, contact admin",
@@ -108,49 +121,57 @@ const FamilyTreeComponent: React.FC = () => {
     });
   }
 
-  type argsType = {
-    addNodesData: Array<object>;
-    updateNodesData: Array<{ [key: string]: string }>;
-    removeNodeId: number | string;
-  };
-
-  const handleEdit = async (args: argsType) => {
+  const handleEdit = async (args: any) => {
     console.log("Edit node:", args);
     try {
-      if (args.updateNodesData.length > 0) {
+      if (args.updateNodesData && args.updateNodesData.length > 0) {
         const nodesToEdit = args.updateNodesData;
-        nodesToEdit.forEach((node) => {
-          updateFamilyMember(node.id, {
-            name: node.name,
-            gender: node.gender,
-            img: node.img,
-          }).catch((error) => {
-            if (error.code == "permission-denied") {
+        for (const node of nodesToEdit) {
+          try {
+            await updateFamilyMember(node.id, {
+              name: node.name,
+              gender: node.gender,
+              img: node.img,
+            });
+          } catch (error) {
+            if (error.code === "permission-denied") {
               console.error("Insufficient permissions to update the document.");
-              showPremissionToast();
+              showPermissionToast();
             } else {
               console.error("Error updating document: ", error);
             }
-          });
-        });
-      }
-    } catch (e) {}
-
-    if (args.removeNodeId !== null) {
-      try {
-        let s = await deleteFamilyMember(args.removeNodeId.toString());
-        console.log("Document successfully removed!");
-        console.log(s);
-        return true;
-      } catch (error) {
-        if (error.code === "auth/insufficient-permission") {
-          showPremissionToast();
-        } else {
-          console.error("Error removing document: ", error);
+          }
         }
       }
+    } catch (e) {
+      console.error("Error in handleEdit:", e);
     }
-    return false;
+  };
+
+  const handleRemove = async () => {
+    if (!selectedRemoveMemberId) return;
+
+    console.log("Remove member:", selectedRemoveMemberId);
+    try {
+      await deleteFamilyMember(selectedRemoveMemberId);
+      if (familyTreeRef.current) {
+        familyTreeRef.current.removeNode(selectedRemoveMemberId);
+      }
+      setDebugInfo(`Member ${selectedRemoveMemberId} removed successfully`);
+      toast({
+        title: "Success",
+        description: "Family member removed successfully",
+      });
+      window.location.reload();
+    } catch (error) {
+      console.error("Error removing document: ", error);
+      setDebugInfo(`Error removing member ${selectedRemoveMemberId}: ${error}`);
+      toast({
+        title: "Error",
+        description: "Failed to remove family member",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleAdd = () => {
@@ -174,6 +195,14 @@ const FamilyTreeComponent: React.FC = () => {
   const handleAddMember = (newMember: FamilyMember) => {
     setIsAddFormOpen(false);
     console.log("New member added:", newMember);
+    if (familyTreeRef.current) {
+      familyTreeRef.current.addNode(newMember);
+    }
+  };
+
+  const handleRemoveForm = () => {
+    console.log("Remove member form opened");
+    setIsRemoveFormOpen(true);
   };
 
   if (loading) {
@@ -216,13 +245,10 @@ const FamilyTreeComponent: React.FC = () => {
                     const selectedNodeId = e.target.value;
                     setSelectedNode(selectedNodeId);
                   }}
+                  value={selectedNode || ""}
                 >
                   {nodes.map((node) => (
-                    <option
-                      key={node.id}
-                      value={node.id}
-                      selected={selectedNode === node.id}
-                    >
+                    <option key={node.id} value={node.id}>
                       {node.name}
                     </option>
                   ))}
@@ -240,6 +266,37 @@ const FamilyTreeComponent: React.FC = () => {
                   onCancel={() => setIsAddFormOpen(false)}
                   existingNodes={nodes}
                 />
+              )}
+              <Button onClick={handleRemoveForm} className="mb-4 ml-2">
+                Remove Member
+              </Button>
+              {isRemoveFormOpen && (
+                <div className="mb-4">
+                  <label
+                    htmlFor="removeMemberSelect"
+                    className="block mb-2 mt-3"
+                  >
+                    Select Member to Remove:
+                  </label>
+                  <select
+                    id="removeMemberSelect"
+                    className="w-full p-2 border border-gray-300 rounded"
+                    onChange={(e) => setSelectedRemoveMemberId(e.target.value)}
+                    value={selectedRemoveMemberId || ""}
+                  >
+                    <option value="" disabled>
+                      Select a member
+                    </option>
+                    {nodes.map((node) => (
+                      <option key={node.id} value={node.id}>
+                        {node.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Button className="mb-4 mt-3" onClick={handleRemove}>
+                    Confirm Remove
+                  </Button>
+                </div>
               )}
               <DebugInfo info={debugInfo} nodeCount={nodes.length} />
             </div>

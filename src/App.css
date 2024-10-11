@@ -12,7 +12,6 @@
   display: none !important;
 }
 
-
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -45,4 +44,10 @@
   font-size: 1.2rem;
   color: #555;
   font-weight: 500;
+}
+
+.remove-btn {
+  display: block !important;
+  pointer-events: all;
+  cursor: pointer;
 }
