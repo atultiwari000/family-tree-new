@@ -14,10 +14,7 @@ import { FamilyMember } from "@/types/familyTypes";
 import { DebugInfo } from "./DebugInfo";
 import useFamilyStore from "@/store/globalFamily";
 
-import {
-  GearIcon,
-  Cross1Icon
-} from "@radix-ui/react-icons"
+import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
 
 const FamilyTreeComponent: React.FC = () => {
@@ -26,20 +23,20 @@ const FamilyTreeComponent: React.FC = () => {
   const { nodes, loading, error } = useFamilyTree();
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>("");
-  const {toast} = useToast()
+  const { toast } = useToast();
 
   const user = useFamilyStore((state) => state.user);
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
-  const [isSetting, setIsSetting] = useState(false)
+  const [isSetting, setIsSetting] = useState(false);
 
   useEffect(() => {
     async function rootNodeSelector() {
       const rootFamilyMember = await getRootFamilyMember();
-      if (rootFamilyMember.length > 0){
+      if (rootFamilyMember.length > 0) {
         setSelectedNode(rootFamilyMember[0].id);
-      }else{
+      } else {
         setSelectedNode(null);
       }
     }
@@ -54,8 +51,8 @@ const FamilyTreeComponent: React.FC = () => {
           divRef.current.innerHTML = "";
         }
 
-        const newNode = nodes.map((node) => {
-          const obj = {
+        let newNode = nodes.map((node) => {
+          let obj = {
             id: node.id,
             name: node.name ?? "",
             gender: node.gender ?? "",
@@ -103,23 +100,23 @@ const FamilyTreeComponent: React.FC = () => {
     }
   }, [nodes, loading]);
 
-  function showPremissionToast(){
+  function showPremissionToast() {
     toast({
       title: "Insufficient permissions",
       description: "please, contact admin",
-      variant: "destructive"
-    })
+      variant: "destructive",
+    });
   }
 
   type argsType = {
     addNodesData: Array<object>;
-    updateNodesData: Array<{[key: string]: string}>;
+    updateNodesData: Array<{ [key: string]: string }>;
     removeNodeId: number | string;
   };
 
   const handleEdit = async (args: argsType) => {
     console.log("Edit node:", args);
-
+    try {
       if (args.updateNodesData.length > 0) {
         const nodesToEdit = args.updateNodesData;
         nodesToEdit.forEach((node) => {
@@ -130,27 +127,27 @@ const FamilyTreeComponent: React.FC = () => {
           }).catch((error) => {
             if (error.code == "permission-denied") {
               console.error("Insufficient permissions to update the document.");
-              showPremissionToast()
+              showPremissionToast();
             } else {
               console.error("Error updating document: ", error);
             }
           });
         });
       }
+    } catch (e) {}
 
-    if(args.removeNodeId !== null) {
-      try{
-        const s = await deleteFamilyMember(args.removeNodeId.toString());
+    if (args.removeNodeId !== null) {
+      try {
+        let s = await deleteFamilyMember(args.removeNodeId.toString());
         console.log("Document successfully removed!");
         console.log(s);
         return true;
-      }
-      catch(error){
-    if (error.code === 'auth/insufficient-permission') {
-      showPremissionToast()
-    } else {
-      console.error("Error removing document: ", error);
-    }
+      } catch (error) {
+        if (error.code === "auth/insufficient-permission") {
+          showPremissionToast();
+        } else {
+          console.error("Error removing document: ", error);
+        }
       }
     }
     return false;
@@ -160,7 +157,6 @@ const FamilyTreeComponent: React.FC = () => {
     console.log("Add new member");
     setIsAddFormOpen(true);
   };
-
 
   const setRootNode = () => {
     if (!familyTreeRef.current || !selectedNode) return;
@@ -181,10 +177,12 @@ const FamilyTreeComponent: React.FC = () => {
   };
 
   if (loading) {
-    return       <div className="loading-container">
-    <div className="spinner"></div>
-    <p>Loading...</p>
-  </div>
+    return (
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
   }
 
   if (error) {
@@ -194,62 +192,67 @@ const FamilyTreeComponent: React.FC = () => {
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       <div
-        className={"w-full h-full " +  (isSetting ? "md:w-3/4" : "")}
+        className={"w-full h-full " + (isSetting ? "md:w-3/4" : "")}
         style={{ height: "100vh" }}
         ref={divRef}
       ></div>
       {user && (
         <>
-        {isSetting ? (
-                <div className="w-full md:w-1/4 p-4 bg-gray-100">
-                  <div>
-                    <Button onClick={()=> setIsSetting(false)}>
-                      <Cross1Icon />
-                    </Button>
-                  </div>
-                <div className="mb-4">
-                  <label htmlFor="rootNodeSelect" className="block mb-2">
-                    Select Root Node:
-                  </label>
-                  <select
-                    id="rootNodeSelect"
-                    className="w-full p-2 border border-gray-300 rounded"
-                    onChange={(e) => {
-                      const selectedNodeId = e.target.value;
-                      setSelectedNode(selectedNodeId);
-                    }}
-                  >
-                    {nodes.map((node) => (
-                      <option
-                        key={node.id}
-                        value={node.id}
-                        selected={selectedNode === node.id}
-                      >
-                        {node.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button className="mb-4" onClick={setRootNode}>
-                    Set as Root Node
-                  </Button>
-                </div>
-                <Button onClick={handleAdd} className="mb-4">
-                  Add Member
+          {isSetting ? (
+            <div className="w-full md:w-1/4 p-4 bg-gray-100">
+              <div>
+                <Button onClick={() => setIsSetting(false)}>
+                  <Cross1Icon />
                 </Button>
-                {isAddFormOpen && (
-                  <AddMemberForm
-                    onSubmit={handleAddMember}
-                    onCancel={() => setIsAddFormOpen(false)}
-                    existingNodes={nodes}
-                  />
-                )}
-                {/* <DebugInfo info={debugInfo} nodeCount={nodes.length} /> */}
               </div>
-        ):(
-          <Button className="mt-7 mr-5" onClick={()=> setIsSetting(true)} variant="ghost" size="icon">
-            <GearIcon  />
-          </Button>
-        )}
+              <div className="mb-4">
+                <label htmlFor="rootNodeSelect" className="block mb-2 mt-3">
+                  Select Root Node:
+                </label>
+                <select
+                  id="rootNodeSelect"
+                  className="w-full p-2 border border-gray-300 rounded"
+                  onChange={(e) => {
+                    const selectedNodeId = e.target.value;
+                    setSelectedNode(selectedNodeId);
+                  }}
+                >
+                  {nodes.map((node) => (
+                    <option
+                      key={node.id}
+                      value={node.id}
+                      selected={selectedNode === node.id}
+                    >
+                      {node.name}
+                    </option>
+                  ))}
+                </select>
+                <Button className="mb-4 mt-3" onClick={setRootNode}>
+                  Set as Root Node
+                </Button>
+              </div>
+              <Button onClick={handleAdd} className="mb-4">
+                Add Member
+              </Button>
+              {isAddFormOpen && (
+                <AddMemberForm
+                  onSubmit={handleAddMember}
+                  onCancel={() => setIsAddFormOpen(false)}
+                  existingNodes={nodes}
+                />
+              )}
+              <DebugInfo info={debugInfo} nodeCount={nodes.length} />
+            </div>
+          ) : (
+            <Button
+              className="mt-7 mr-5"
+              onClick={() => setIsSetting(true)}
+              variant="ghost"
+              size="icon"
+            >
+              <GearIcon />
+            </Button>
+          )}
         </>
       )}
     </div>
