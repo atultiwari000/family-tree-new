@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/select";
 import { addFamilyMember } from "@/services/familyService";
 import { FamilyMember, AddMemberFormProps } from "@/types/familyTypes";
+import imageCompression from 'browser-image-compression';
+
 
 const AddMemberForm: React.FC<AddMemberFormProps> = ({
   onSubmit,
@@ -37,7 +39,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
         gender,
         fid: fatherId && fatherId !== "unassigned" ? [fatherId] : undefined,
         mid: motherId && motherId !== "unassigned" ? [motherId] : undefined,
-        pids: partnerId && partnerId !== "unassigned" ? [partnerId] : undefined,
+        pids: partnerId && partnerId !== "unassigned" ? [partnerId] : [],
         img: null,
       };
 
@@ -49,6 +51,21 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       setIsSubmitting(false);
     }
   };
+
+  const imageHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if(e && e.target && e.target && e.target.files && e.target.files.length > 0) {
+      const imageFile = e.target.files[0];
+      const options = {
+        maxSizeMB: 0.2,
+        useWebWorker: true,
+      }
+      const compressedFile = await imageCompression(imageFile, options);
+      console.log(compressedFile)
+      setImage(compressedFile);
+      return;
+    }
+    setImage(null);
+  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -79,7 +96,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
           id="image"
           type="file"
           accept="image/*"
-          onChange={(e) => setImage(e.target.files?.[0] || null)}
+          onChange={imageHandler}
         />
       </div>
       <div>
