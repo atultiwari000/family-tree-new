@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {  signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
 import {Button} from '@/components/ui/button';
 import {Avatar, AvatarImage, AvatarFallback} from '@/components/ui/avatar';

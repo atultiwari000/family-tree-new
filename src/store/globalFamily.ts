@@ -6,8 +6,8 @@ interface familyStore {
     setFamily: (family:FamilyTree)=>void
     isOpen: boolean
     setIsOpen: (isOpen:boolean)=>void
-    user: any | null
-    setUser: (user:any)=>void
+    user: any
+    setUser: (user)=>void
 }
 
 const useFamilyStore = create<familyStore>((set) => ({
@@ -16,7 +16,7 @@ const useFamilyStore = create<familyStore>((set) => ({
     isOpen: false,
     setIsOpen: (isOpen:boolean) => set(()=> ({ isOpen:isOpen }) ),
     user: null,
-    setUser: (user:any) => set(()=> ({ user:user }) )
+    setUser: (user) => set(()=> ({ user:user }) )
 }))
 
 export default useFamilyStore

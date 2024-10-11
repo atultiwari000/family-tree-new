@@ -50,8 +50,8 @@ const FamilyTreeComponent: React.FC = () => {
           divRef.current.innerHTML = "";
         }
 
-        let newNode = nodes.map((node) => {
-          let obj = {
+        const newNode = nodes.map((node) => {
+          const obj = {
             id: node.id,
             name: node.name ?? "",
             gender: node.gender ?? "",
@@ -115,7 +115,6 @@ const FamilyTreeComponent: React.FC = () => {
 
   const handleEdit = async (args: argsType) => {
     console.log("Edit node:", args);
-    try{
 
       if (args.updateNodesData.length > 0) {
         const nodesToEdit = args.updateNodesData;
@@ -134,14 +133,10 @@ const FamilyTreeComponent: React.FC = () => {
           });
         });
       }
-    }
-    catch(e){
-
-    }
 
     if(args.removeNodeId !== null) {
       try{
-        let s = await deleteFamilyMember(args.removeNodeId.toString());
+        const s = await deleteFamilyMember(args.removeNodeId.toString());
         console.log("Document successfully removed!");
         console.log(s);
         return true;
@@ -244,7 +239,7 @@ const FamilyTreeComponent: React.FC = () => {
                     existingNodes={nodes}
                   />
                 )}
-                <DebugInfo info={debugInfo} nodeCount={nodes.length} />
+                {/* <DebugInfo info={debugInfo} nodeCount={nodes.length} /> */}
               </div>
         ):(
           <Button className="mt-7 mr-5" onClick={()=> setIsSetting(true)} variant="ghost" size="icon">
