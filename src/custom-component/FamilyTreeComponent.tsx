@@ -37,7 +37,11 @@ const FamilyTreeComponent: React.FC = () => {
   useEffect(() => {
     async function rootNodeSelector() {
       const rootFamilyMember = await getRootFamilyMember();
-      setSelectedNode(rootFamilyMember[0].id);
+      if (rootFamilyMember.length > 0){
+        setSelectedNode(rootFamilyMember[0].id);
+      }else{
+        setSelectedNode(null);
+      }
     }
     rootNodeSelector();
   }, []);
