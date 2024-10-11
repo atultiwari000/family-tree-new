@@ -17,12 +17,17 @@ jobs:
         uses: actions/setup-node@v3 # This already works with Node 20
         with:
           node-version: '20'
+      - name: Inject environment variables
+        run: |
+          echo "VITE_REACT_APP_FIREBASE_API_KEY=${{ secrets.VITE_REACT_APP_FIREBASE_API_KEY }}" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: npm install
 
       - name: Build project
         run: npm run build
+        env:
+          VITE_REACT_APP_FIREBASE_API_KEY: ${{ secrets.VITE_REACT_APP_FIREBASE_API_KEY }}
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
