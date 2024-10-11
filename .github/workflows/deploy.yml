@@ -11,12 +11,13 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3 # This already works with Node 20
+        uses: actions/checkout@v3  # Works with Node 20
 
       - name: Set up Node.js
-        uses: actions/setup-node@v3 # This already works with Node 20
+        uses: actions/setup-node@v3  # Works with Node 20
         with:
           node-version: '20'
+
       - name: Inject environment variables
         run: |
           echo "VITE_REACT_APP_FIREBASE_API_KEY=${{ secrets.VITE_REACT_APP_FIREBASE_API_KEY }}" >> $GITHUB_ENV
