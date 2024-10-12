@@ -12,6 +12,7 @@ import {
 import { addFamilyMember } from "@/services/familyService";
 import { FamilyMember, AddMemberFormProps } from "@/types/familyTypes";
 import imageCompression from 'browser-image-compression';
+import { useToast } from "@/hooks/use-toast";
 
 
 const AddMemberForm: React.FC<AddMemberFormProps> = ({
@@ -26,6 +27,15 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
   const [motherId, setMotherId] = useState<string | null>(null);
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const {toast} = useToast()
+
+  function showPremissionToast(){
+    toast({
+      title: "Insufficient permissions",
+      description: "please, contact admin",
+      variant: "destructive"
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +56,9 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       const addedMember = await addFamilyMember(newMember, image);
       onSubmit(addedMember);
     } catch (error) {
+      if(error.code == "permission-denied"){
+        showPremissionToast()
+      }
       console.error("Error adding family member: ", error);
     } finally {
       setIsSubmitting(false);

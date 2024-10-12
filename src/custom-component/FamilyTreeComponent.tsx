@@ -140,30 +140,21 @@ const FamilyTreeComponent: React.FC = () => {
             } else {
               console.error("Error updating document: ", error);
             }
-          }
-        }
+          });
+        });
       }
-    } catch (e) {
-      console.error("Error in handleEdit:", e);
-    }
-  };
 
-  const handleRemove = async () => {
-    if (!selectedRemoveMemberId) return;
-
-    console.log("Remove member:", selectedRemoveMemberId);
-    try {
-      await deleteFamilyMember(selectedRemoveMemberId);
-      if (familyTreeRef.current) {
-        familyTreeRef.current.removeNode(selectedRemoveMemberId);
+    if(args.removeNodeId !== null) {
+      try{
+        const s = await deleteFamilyMember(args.removeNodeId.toString());
+        console.log("Document successfully removed!");
+        console.log(s);
+        return true;
       }
-      setDebugInfo(`Member ${selectedRemoveMemberId} removed successfully`);
-      toast({
-        title: "Success",
-        description: "Family member removed successfully",
-      });
-      window.location.reload();
-    } catch (error) {
+      catch(error){
+    if (error.code == "permission-denied") {
+      showPremissionToast()
+    } else {
       console.error("Error removing document: ", error);
       setDebugInfo(`Error removing member ${selectedRemoveMemberId}: ${error}`);
       toast({
@@ -227,89 +218,56 @@ const FamilyTreeComponent: React.FC = () => {
       ></div>
       {user && (
         <>
-          {isSetting ? (
-            <div className="w-full md:w-1/4 p-4 bg-gray-100">
-              <div>
-                <Button onClick={() => setIsSetting(false)}>
-                  <Cross1Icon />
-                </Button>
-              </div>
-              <div className="mb-4">
-                <label htmlFor="rootNodeSelect" className="block mb-2 mt-3">
-                  Select Root Node:
-                </label>
-                <select
-                  id="rootNodeSelect"
-                  className="w-full p-2 border border-gray-300 rounded"
-                  onChange={(e) => {
-                    const selectedNodeId = e.target.value;
-                    setSelectedNode(selectedNodeId);
-                  }}
-                  value={selectedNode || ""}
-                >
-                  {nodes.map((node) => (
-                    <option key={node.id} value={node.id}>
-                      {node.name}
-                    </option>
-                  ))}
-                </select>
-                <Button className="mb-4 mt-3" onClick={setRootNode}>
-                  Set as Root Node
-                </Button>
-              </div>
-              <Button onClick={handleAdd} className="mb-4">
-                Add Member
-              </Button>
-              {isAddFormOpen && (
-                <AddMemberForm
-                  onSubmit={handleAddMember}
-                  onCancel={() => setIsAddFormOpen(false)}
-                  existingNodes={nodes}
-                />
-              )}
-              <Button onClick={handleRemoveForm} className="mb-4 ml-2">
-                Remove Member
-              </Button>
-              {isRemoveFormOpen && (
+        {isSetting ? (
+                <div className="w-full md:w-1/4 p-4 bg-gray-100">
+                  <div>
+                    <Button onClick={()=> setIsSetting(false)}>
+                      <Cross1Icon />
+                    </Button>
+                  </div>
                 <div className="mb-4">
-                  <label
-                    htmlFor="removeMemberSelect"
-                    className="block mb-2 mt-3"
-                  >
-                    Select Member to Remove:
+                  <label htmlFor="rootNodeSelect" className="block mb-2">
+                    Select Root Node:
                   </label>
                   <select
-                    id="removeMemberSelect"
+                    id="rootNodeSelect"
                     className="w-full p-2 border border-gray-300 rounded"
-                    onChange={(e) => setSelectedRemoveMemberId(e.target.value)}
-                    value={selectedRemoveMemberId || ""}
+                    onChange={(e) => {
+                      const selectedNodeId = e.target.value;
+                      setSelectedNode(selectedNodeId);
+                    }}
                   >
-                    <option value="" disabled>
-                      Select a member
-                    </option>
                     {nodes.map((node) => (
-                      <option key={node.id} value={node.id}>
+                      <option
+                        key={node.id}
+                        value={node.id}
+                        selected={selectedNode === node.id}
+                      >
                         {node.name}
                       </option>
                     ))}
                   </select>
-                  <Button className="mb-4 mt-3" onClick={handleRemove}>
-                    Confirm Remove
+                  <Button className="mb-4" onClick={setRootNode}>
+                    Set as Root Node
                   </Button>
                 </div>
-              )}
-              <DebugInfo info={debugInfo} nodeCount={nodes.length} />
-            </div>
-          ) : (
-            <Button
-              className="mt-7 mr-5"
-              onClick={() => setIsSetting(true)}
-              variant="ghost"
-              size="icon"
-            >
-              <GearIcon />
-            </Button>
-          )}
+                <Button onClick={handleAdd} className="mb-4">
+                  Add Member
+                </Button>
+                {isAddFormOpen && (
+                  <AddMemberForm
+                    onSubmit={handleAddMember}
+                    onCancel={() => setIsAddFormOpen(false)}
+                    existingNodes={nodes}
+                  />
+                )}
+                {/* <DebugInfo info={debugInfo} nodeCount={nodes.length} /> */}
+              </div>
+        ):(
+          <Button className="mt-7 mr-5 absolute top-14 ml-3" onClick={()=> setIsSetting(true)} variant="default" size="icon">
+            <GearIcon  />
+          </Button>
+        )}
         </>
       )}
     </div>
