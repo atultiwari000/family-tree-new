@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import FamilyTree from "@/family-tree/wrapper";
-
+import firebaseConfig from "../firebase";
 import { Button } from "@/components/ui/button";
 import AddMemberForm from "@/forms/AddMemberForm";
 import { useFamilyTree } from "@/hooks/useFamilyTree";
@@ -188,6 +188,8 @@ const FamilyTreeComponent: React.FC = () => {
     return <div>Error loading family tree data: {error}</div>;
   }
 
+  console.log(firebaseConfig);
+
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       <div
@@ -244,7 +246,7 @@ const FamilyTreeComponent: React.FC = () => {
             </div>
           ) : (
             <Button
-              className="mt-7 mr-5 m-3"
+              className="mt-7 mr-5 absolute bottom-5 ml-3"
               onClick={() => setIsSetting(true)}
               variant="default"
               size="icon"

@@ -42,15 +42,15 @@ const LoginUI: React.FC = () => {
   };
 
   return (
-    <div className="absolute z-10 m-3 mt-5">
+    <div className="absolute z-10 m-3 mt-6">
       {user ? (
         <div>
-          <div className="flex items-center gap-3 mb-3">
+          <div className="flex items-center gap-1 mb-3">
             <Avatar>
               <AvatarImage src={user.photoURL} alt="user avatar" />
               <AvatarFallback>{user.displayName[0]}</AvatarFallback>
             </Avatar>
-            <h6>{user.displayName}</h6>
+            <h5>{user.displayName}</h5>
           </div>
           <Button onClick={handleLogout}>Logout</Button>
         </div>
