@@ -146,7 +146,7 @@ const FamilyTreeComponent: React.FC = () => {
         return true;
       }
       catch(error){
-    if (error.code === 'auth/insufficient-permission') {
+    if (error.code == "permission-denied") {
       showPremissionToast()
     } else {
       console.error("Error removing document: ", error);
