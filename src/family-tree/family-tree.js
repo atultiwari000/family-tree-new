@@ -1951,7 +1951,7 @@ var FamilyTree = function (e, t) {
     "The trial has expired or 200 nodes limit was reached! <br /><a style='color: #039BE5;' target='_blank' href='https://balkan.app/FamilyTreeJS/Docs/Evaluation'>See more</a>"),
   (FamilyTree.OFFLINE_MESS =
     "The evaluation version requires internet connection! <br /><a style='color: #039BE5;' target='_blank' href='https://balkan.app/FamilyTreeJS/Docs/Evaluation'>See more</a>"),
-  (FamilyTree.SEARCH_PLACEHOLDER = "Search... type ? to get help."),
+  (FamilyTree.SEARCH_PLACEHOLDER = "Search for name ....."),
   (FamilyTree.SEARCH_HELP_SYMBOL = "?"),
   (FamilyTree.SEARCH_CLOSE_RESULT_ON_ESCAPE_OR_CLICKOUTSIDE = !1),
   (FamilyTree.SEARCH_RESULT_LIMIT = 10),
