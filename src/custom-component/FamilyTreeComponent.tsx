@@ -246,7 +246,7 @@ const FamilyTreeComponent: React.FC = () => {
                 {/* <DebugInfo info={debugInfo} nodeCount={nodes.length} /> */}
               </div>
         ):(
-          <Button className="mt-7 mr-5" onClick={()=> setIsSetting(true)} variant="ghost" size="icon">
+          <Button className="mt-7 mr-5 absolute top-14 ml-3" onClick={()=> setIsSetting(true)} variant="default" size="icon">
             <GearIcon  />
           </Button>
         )}

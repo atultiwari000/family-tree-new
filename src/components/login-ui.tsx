@@ -41,7 +41,7 @@ const LoginUI: React.FC = () => {
   };
 
   return (
-    <div className="absolute z-10 m-3">
+    <div className="absolute z-10 m-3 mt-32">
       {user ? (
         <div>
           <div className='flex items-center gap-3 mb-3'>
