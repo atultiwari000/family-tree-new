@@ -78,6 +78,7 @@ const FamilyTreeComponent: React.FC = () => {
           nodeBinding: {
             field_0: "name",
             img_0: "img",
+            field_1: "dob",
           },
           levelSeparation: 100,
           siblingSeparation: 50,
@@ -87,6 +88,12 @@ const FamilyTreeComponent: React.FC = () => {
             fit: true,
           },
           roots: selectedNode ? [selectedNode] : [],
+          editForm: {
+            buttons: {
+              pdf: null,
+            },
+            addMore: "",
+          },
         });
 
         familyTreeRef.current = f;
