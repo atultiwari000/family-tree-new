@@ -208,7 +208,7 @@ const FamilyTreeComponent: React.FC = () => {
   return (
     <div className="flex w-full h-screen">
       <div
-        className={`fixed top-0 left-0 w-full md:w-1/4 h-full bg-white shadow-lg p-4 transition-transform duration-300 ease-in-out z-50 ${
+        className={`fixed top-0 left-0 w-full md:w-1/5 h-full bg-white shadow-lg p-4 transition-transform duration-300 ease-in-out z-50 ${
           isSetting ? "translate-x-0" : "-translate-x-full"
         }`}
       >
@@ -268,8 +268,8 @@ const FamilyTreeComponent: React.FC = () => {
         )}
       </div>
       {isAddFormOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 transition-transform duration-500 ease-in-out">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md ">
             <AddMemberForm
               onSubmit={handleFormSubmit}
               onCancel={() => setIsAddFormOpen(false)}
