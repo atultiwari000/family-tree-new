@@ -2,7 +2,7 @@ export interface FamilyMember {
     id: string;
     name?: string | undefined;
     phone?: string | undefined;
-    dob?: Date | undefined;
+    dob?: string | undefined;
     img?: string | null | undefined;
     pids?: string[] | undefined;
     fid?: string[] | undefined;

@@ -8,20 +8,17 @@ import {
   deleteFamilyMember,
   setRootFamilyMember,
   getRootFamilyMember,
-  addFamilyMember,
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
 import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
-import { Phone } from "lucide-react";
 
 const FamilyTreeComponent: React.FC = () => {
   const divRef = useRef<HTMLDivElement>(null);
   const familyTreeRef = useRef<FamilyTree | null>(null);
   const { nodes, loading, error } = useFamilyTree();
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
-  const [editMember, setEditMember] = useState<FamilyMember | null>(null);
   const { toast } = useToast();
 
   const user = useFamilyStore((state) => state.user);
@@ -171,7 +168,6 @@ const FamilyTreeComponent: React.FC = () => {
   };
 
   const handleAdd = () => {
-    setEditMember(null);
     setIsAddFormOpen(true);
   };
 
@@ -188,31 +184,9 @@ const FamilyTreeComponent: React.FC = () => {
       });
   };
 
-  const handleFormSubmit = async (member: FamilyMember, image: File | null) => {
+  const handleFormSubmit = (newMember: FamilyMember) => {
     setIsAddFormOpen(false);
-    try {
-      if (editMember) {
-        await updateFamilyMember(editMember.id, member, image);
-        toast({
-          title: "Success",
-          description: "Family member updated successfully",
-        });
-      } else {
-        await addFamilyMember(member, image);
-        toast({
-          title: "Success",
-          description: "New family member added successfully",
-        });
-      }
-      // The Firestore listener in useFamilyTree will automatically update the nodes
-    } catch (error) {
-      console.error("Error adding/updating family member: ", error);
-      toast({
-        title: "Error",
-        description: "Failed to add/update family member",
-        variant: "destructive",
-      });
-    }
+    console.log("New member added:", newMember);
   };
 
   if (loading) {
@@ -232,60 +206,67 @@ const FamilyTreeComponent: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col md:flex-row w-full h-screen">
+    <div className="flex w-full h-screen">
       <div
-        className={"w-full h-full " + (isSetting ? "md:w-3/4" : "")}
-        style={{ height: "100vh" }}
-        ref={divRef}
-      ></div>
-      {user && (
-        <>
-          {isSetting ? (
-            <div className="w-full md:w-1/4 p-4 bg-gray-100">
-              <div>
-                <Button onClick={() => setIsSetting(false)}>
-                  <Cross1Icon />
-                </Button>
-              </div>
-              <div className="mb-3 mt-5">
-                <label htmlFor="rootNodeSelect" className="block mb-2">
-                  Select Root Node:
-                </label>
-                <select
-                  id="rootNodeSelect"
-                  className="w-full p-2 border border-gray-300 rounded"
-                  onChange={(e) => {
-                    const selectedNodeId = e.target.value;
-                    setSelectedNode(selectedNodeId);
-                  }}
-                  value={selectedNode || ""}
-                >
-                  {nodes.map((node) => (
-                    <option key={node.id} value={node.id}>
-                      {node.name}
-                    </option>
-                  ))}
-                </select>
-                <Button className="mb-4 mt-4" onClick={setRootNode}>
-                  Set as Root Node
-                </Button>
-              </div>
-              <Button onClick={handleAdd} className="mb-4">
-                Add Member
-              </Button>
-            </div>
-          ) : (
-            <Button
-              className="mt-7 mr-5 absolute bottom-5 ml-3"
-              onClick={() => setIsSetting(true)}
-              variant="default"
-              size="icon"
+        className={`fixed top-0 left-0 w-full md:w-1/4 h-full bg-white shadow-lg p-4 transition-transform duration-300 ease-in-out z-50 ${
+          isSetting ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <Button
+            onClick={() => setIsSetting(false)}
+            variant="ghost"
+            size="icon"
+          >
+            <Cross1Icon />
+          </Button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="rootNodeSelect"
+              className="block text-sm font-medium text-gray-700 mb-1"
             >
-              <GearIcon />
-            </Button>
-          )}
-        </>
-      )}
+              Select Root Node:
+            </label>
+            <select
+              id="rootNodeSelect"
+              className="w-full p-2 border border-gray-300 rounded"
+              onChange={(e) => setSelectedNode(e.target.value)}
+              value={selectedNode || ""}
+            >
+              {nodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  {node.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={setRootNode} className="w-full">
+            Set as Root Node
+          </Button>
+          <Button onClick={handleAdd} className="w-full">
+            Add Member
+          </Button>
+        </div>
+      </div>
+      <div className="flex-1 relative">
+        <div
+          className="w-full h-full"
+          style={{ height: "100vh" }}
+          ref={divRef}
+        ></div>
+        {!isSetting && (
+          <Button
+            className="absolute bottom-4 left-3"
+            onClick={() => setIsSetting(true)}
+            variant="default"
+            size="icon"
+          >
+            <GearIcon />
+          </Button>
+        )}
+      </div>
       {isAddFormOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
@@ -293,7 +274,6 @@ const FamilyTreeComponent: React.FC = () => {
               onSubmit={handleFormSubmit}
               onCancel={() => setIsAddFormOpen(false)}
               existingNodes={nodes}
-              editMember={editMember}
             />
           </div>
         </div>
