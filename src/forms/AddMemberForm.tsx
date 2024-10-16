@@ -11,9 +11,8 @@ import {
 } from "@/components/ui/select";
 import { addFamilyMember } from "@/services/familyService";
 import { FamilyMember, AddMemberFormProps } from "@/types/familyTypes";
-import imageCompression from 'browser-image-compression';
+import imageCompression from "browser-image-compression";
 import { useToast } from "@/hooks/use-toast";
-
 
 const AddMemberForm: React.FC<AddMemberFormProps> = ({
   onSubmit,
@@ -23,32 +22,38 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
   const [image, setImage] = useState<File | null>(null);
+  const [phone, setPhone] = useState<string | null>(null);
+  const [dob, setDob] = useState<string | null>(null);
   const [fatherId, setFatherId] = useState<string | null>(null);
   const [motherId, setMotherId] = useState<string | null>(null);
   const [partnerId, setPartnerId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const {toast} = useToast()
+  const { toast } = useToast();
 
-  function showPremissionToast(){
+  function showPermissionToast() {
     toast({
       title: "Insufficient permissions",
       description: "please, contact admin",
-      variant: "destructive"
-    })
+      variant: "destructive",
+    });
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted");
+
     if (isSubmitting) return;
     setIsSubmitting(true);
 
     try {
       const newMember: FamilyMember = {
-        id: "", // This will be set by Firestore
+        id: "",
         name,
         gender,
-        fid: fatherId && fatherId !== "unassigned" ? [fatherId] : undefined,
-        mid: motherId && motherId !== "unassigned" ? [motherId] : undefined,
+        phone,
+        dob,
+        fid: fatherId && fatherId !== "unassigned" ? [fatherId] : [],
+        mid: motherId && motherId !== "unassigned" ? [motherId] : [],
         pids: partnerId && partnerId !== "unassigned" ? [partnerId] : [],
         img: null,
       };
@@ -56,29 +61,50 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       const addedMember = await addFamilyMember(newMember, image);
       onSubmit(addedMember);
     } catch (error) {
-      if(error.code == "permission-denied"){
-        showPremissionToast()
+      if (error.code === "permission-denied") {
+        showPermissionToast();
+      } else {
+        console.error("Error adding/updating family member: ", error);
+        toast({
+          title: "Error",
+          description: "Failed to add/update family member",
+          variant: "destructive",
+        });
       }
-      console.error("Error adding family member: ", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const imageHandler = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if(e && e.target && e.target && e.target.files && e.target.files.length > 0) {
+    if (
+      e &&
+      e.target &&
+      e.target &&
+      e.target.files &&
+      e.target.files.length > 0
+    ) {
       const imageFile = e.target.files[0];
       const options = {
         maxSizeMB: 0.2,
         useWebWorker: true,
+      };
+      try {
+        const compressedFile = await imageCompression(imageFile, options);
+        console.log(compressedFile);
+        setImage(compressedFile);
+      } catch (error) {
+        console.error("Error compressing image: ", error);
+        toast({
+          title: "Error",
+          description: "Failed to compress image",
+          variant: "destructive",
+        });
       }
-      const compressedFile = await imageCompression(imageFile, options);
-      console.log(compressedFile)
-      setImage(compressedFile);
-      return;
+    } else {
+      setImage(null);
     }
-    setImage(null);
-  }
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -93,7 +119,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       </div>
       <div>
         <Label htmlFor="gender">Gender</Label>
-        <Select onValueChange={setGender}>
+        <Select onValueChange={setGender} value={gender}>
           <SelectTrigger>
             <SelectValue placeholder="Select gender" />
           </SelectTrigger>
@@ -102,6 +128,23 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
             <SelectItem value="female">Female</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div>
+        <Label htmlFor="phone">Phone No.</Label>
+        <Input
+          id="phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+      </div>
+      <div>
+        <Label htmlFor="dob">Date of Birth</Label>
+        <Input
+          id="dob"
+          type="date"
+          value={dob}
+          onChange={(e) => setDob(e.target.value)}
+        />
       </div>
       <div>
         <Label htmlFor="image">Image</Label>
@@ -114,7 +157,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       </div>
       <div>
         <Label htmlFor="fatherId">Father</Label>
-        <Select onValueChange={setFatherId}>
+        <Select onValueChange={setFatherId} value={fatherId || undefined}>
           <SelectTrigger>
             <SelectValue placeholder="Select father" />
           </SelectTrigger>
@@ -132,7 +175,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       </div>
       <div>
         <Label htmlFor="motherId">Mother</Label>
-        <Select onValueChange={setMotherId}>
+        <Select onValueChange={setMotherId} value={motherId || undefined}>
           <SelectTrigger>
             <SelectValue placeholder="Select mother" />
           </SelectTrigger>
@@ -150,7 +193,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       </div>
       <div>
         <Label htmlFor="partnerId">Partner</Label>
-        <Select onValueChange={setPartnerId}>
+        <Select onValueChange={setPartnerId} value={partnerId || undefined}>
           <SelectTrigger>
             <SelectValue placeholder="Select partner" />
           </SelectTrigger>

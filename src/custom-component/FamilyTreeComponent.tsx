@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import FamilyTree from "@/family-tree/wrapper";
-import firebaseConfig from "../firebase";
 import { Button } from "@/components/ui/button";
 import AddMemberForm from "@/forms/AddMemberForm";
 import { useFamilyTree } from "@/hooks/useFamilyTree";
@@ -9,26 +8,25 @@ import {
   deleteFamilyMember,
   setRootFamilyMember,
   getRootFamilyMember,
+  addFamilyMember,
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
-import { DebugInfo } from "./DebugInfo";
 import useFamilyStore from "@/store/globalFamily";
-
 import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
+import { Phone } from "lucide-react";
 
 const FamilyTreeComponent: React.FC = () => {
   const divRef = useRef<HTMLDivElement>(null);
   const familyTreeRef = useRef<FamilyTree | null>(null);
   const { nodes, loading, error } = useFamilyTree();
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [editMember, setEditMember] = useState<FamilyMember | null>(null);
   const { toast } = useToast();
 
   const user = useFamilyStore((state) => state.user);
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-
   const [isSetting, setIsSetting] = useState(false);
 
   useEffect(() => {
@@ -56,6 +54,8 @@ const FamilyTreeComponent: React.FC = () => {
             id: node.id,
             name: node.name ?? "",
             gender: node.gender ?? "",
+            dob: node.dob ?? "",
+            phone: node.phone ?? "",
           };
           if (node.img) {
             obj["img"] = node.img;
@@ -78,7 +78,6 @@ const FamilyTreeComponent: React.FC = () => {
           nodeBinding: {
             field_0: "name",
             img_0: "img",
-            field_1: "dob",
           },
           levelSeparation: 100,
           siblingSeparation: 50,
@@ -98,22 +97,19 @@ const FamilyTreeComponent: React.FC = () => {
 
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
-
-        setDebugInfo("Family tree initialized successfully");
       } catch (err) {
         console.error("Error initializing family tree:", err);
-        setDebugInfo(`Error initializing family tree: ${err}`);
       }
     }
   }, [nodes, loading]);
 
-  function showPremissionToast() {
+  const showPermissionToast = () => {
     toast({
       title: "Insufficient permissions",
-      description: "please, contact admin",
+      description: "Please contact admin",
       variant: "destructive",
     });
-  }
+  };
 
   type argsType = {
     addNodesData: Array<object>;
@@ -126,33 +122,48 @@ const FamilyTreeComponent: React.FC = () => {
 
     if (args.updateNodesData.length > 0) {
       const nodesToEdit = args.updateNodesData;
-      nodesToEdit.forEach((node) => {
-        updateFamilyMember(node.id, {
-          name: node.name,
-          gender: node.gender,
-          img: node.img,
-        }).catch((error) => {
-          if (error.code == "permission-denied") {
+      for (const node of nodesToEdit) {
+        try {
+          await updateFamilyMember(node.id, {
+            name: node.name,
+            gender: node.gender,
+            img: node.img,
+          });
+        } catch (error) {
+          if (error.code === "permission-denied") {
             console.error("Insufficient permissions to update the document.");
-            showPremissionToast();
+            showPermissionToast();
           } else {
             console.error("Error updating document: ", error);
+            toast({
+              title: "Error",
+              description: "Failed to update family member",
+              variant: "destructive",
+            });
           }
-        });
-      });
+        }
+      }
     }
 
     if (args.removeNodeId !== null) {
       try {
-        const s = await deleteFamilyMember(args.removeNodeId.toString());
+        await deleteFamilyMember(args.removeNodeId.toString());
         console.log("Document successfully removed!");
-        console.log(s);
+        toast({
+          title: "Success",
+          description: "Family member removed successfully",
+        });
         return true;
       } catch (error) {
-        if (error.code == "permission-denied") {
-          showPremissionToast();
+        if (error.code === "permission-denied") {
+          showPermissionToast();
         } else {
           console.error("Error removing document: ", error);
+          toast({
+            title: "Error",
+            description: "Failed to remove family member",
+            variant: "destructive",
+          });
         }
       }
     }
@@ -160,7 +171,7 @@ const FamilyTreeComponent: React.FC = () => {
   };
 
   const handleAdd = () => {
-    console.log("Add new member");
+    setEditMember(null);
     setIsAddFormOpen(true);
   };
 
@@ -177,30 +188,53 @@ const FamilyTreeComponent: React.FC = () => {
       });
   };
 
-  const handleAddMember = (newMember: FamilyMember) => {
+  const handleFormSubmit = async (member: FamilyMember, image: File | null) => {
     setIsAddFormOpen(false);
-    console.log("New member added:", newMember);
+    try {
+      if (editMember) {
+        await updateFamilyMember(editMember.id, member, image);
+        toast({
+          title: "Success",
+          description: "Family member updated successfully",
+        });
+      } else {
+        await addFamilyMember(member, image);
+        toast({
+          title: "Success",
+          description: "New family member added successfully",
+        });
+      }
+      // The Firestore listener in useFamilyTree will automatically update the nodes
+    } catch (error) {
+      console.error("Error adding/updating family member: ", error);
+      toast({
+        title: "Error",
+        description: "Failed to add/update family member",
+        variant: "destructive",
+      });
+    }
   };
 
   if (loading) {
     return (
-      <div className="loading-container">
-        <div className="spinner"></div>
-        <p>Loading...</p>
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
       </div>
     );
   }
 
   if (error) {
-    return <div>Error loading family tree data: {error}</div>;
+    return (
+      <div className="text-center text-red-500 p-4">
+        Error loading family tree data: {error}
+      </div>
+    );
   }
-
-  console.log(firebaseConfig);
 
   return (
     <div className="flex flex-col md:flex-row w-full h-screen">
       <div
-        className={"w-full h-full" + (isSetting ? "md:w-3/4" : "")}
+        className={"w-full h-full " + (isSetting ? "md:w-3/4" : "")}
         style={{ height: "100vh" }}
         ref={divRef}
       ></div>
@@ -224,13 +258,10 @@ const FamilyTreeComponent: React.FC = () => {
                     const selectedNodeId = e.target.value;
                     setSelectedNode(selectedNodeId);
                   }}
+                  value={selectedNode || ""}
                 >
                   {nodes.map((node) => (
-                    <option
-                      key={node.id}
-                      value={node.id}
-                      selected={selectedNode === node.id}
-                    >
+                    <option key={node.id} value={node.id}>
                       {node.name}
                     </option>
                   ))}
@@ -242,14 +273,6 @@ const FamilyTreeComponent: React.FC = () => {
               <Button onClick={handleAdd} className="mb-4">
                 Add Member
               </Button>
-              {isAddFormOpen && (
-                <AddMemberForm
-                  onSubmit={handleAddMember}
-                  onCancel={() => setIsAddFormOpen(false)}
-                  existingNodes={nodes}
-                />
-              )}
-              {/* <DebugInfo info={debugInfo} nodeCount={nodes.length} /> */}
             </div>
           ) : (
             <Button
@@ -262,6 +285,18 @@ const FamilyTreeComponent: React.FC = () => {
             </Button>
           )}
         </>
+      )}
+      {isAddFormOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <AddMemberForm
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsAddFormOpen(false)}
+              existingNodes={nodes}
+              editMember={editMember}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

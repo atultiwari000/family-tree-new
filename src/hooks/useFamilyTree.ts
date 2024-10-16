@@ -21,6 +21,8 @@ export const useFamilyTree = () => {
                 name: data.name || "",
                 gender: data.gender || "",
                 img: data.img || "",
+                dob: data.dob || "",
+                phone: data.phone || "",
                 pids: data.pids || [],
                 fid: data.fid || [],
                 mid: data.mid || [],
