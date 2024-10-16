@@ -13,6 +13,7 @@ import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
 import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
+import imageCompression from "browser-image-compression";
 
 const FamilyTreeComponent: React.FC = () => {
   const divRef = useRef<HTMLDivElement>(null);
@@ -37,6 +38,26 @@ const FamilyTreeComponent: React.FC = () => {
     }
     rootNodeSelector();
   }, []);
+
+  const imageHandler = async (file: File) => {
+    const options = {
+      maxSizeMB: 0.2,
+      useWebWorker: true,
+    };
+    try {
+      const compressedFile = await imageCompression(file, options);
+      console.log(compressedFile);
+      return compressedFile;
+    } catch (error) {
+      console.error("Error compressing image: ", error);
+      toast({
+        title: "Error",
+        description: "Failed to compress image",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (divRef.current && nodes.length > 0 && !loading) {
@@ -63,7 +84,7 @@ const FamilyTreeComponent: React.FC = () => {
           if (node.mid?.length > 0) {
             obj["mid"] = node.mid;
           }
-          if (node.pids) {
+          if (node.pids && node.pids.length > 0) {
             obj["pids"] = node.pids;
           }
           return obj;
@@ -85,6 +106,20 @@ const FamilyTreeComponent: React.FC = () => {
           },
           roots: selectedNode ? [selectedNode] : [],
           editForm: {
+            elements: [
+              { type: "textbox", label: "Full Name", binding: "name" },
+              { type: "textbox", label: "Gender", binding: "gender" },
+              [
+                { type: "textbox", label: "Phone", binding: "phone" },
+                { type: "date", label: "Date Of Birth", binding: "dob" },
+              ],
+              {
+                type: "textbox",
+                label: "Image Url",
+                binding: "img",
+                btn: "Upload",
+              },
+            ],
             buttons: {
               pdf: null,
             },
@@ -125,6 +160,8 @@ const FamilyTreeComponent: React.FC = () => {
             name: node.name,
             gender: node.gender,
             img: node.img,
+            phone: node.phone,
+            dob: node.dob,
           });
         } catch (error) {
           if (error.code === "permission-denied") {

@@ -26,17 +26,39 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
   const [dob, setDob] = useState<string | null>(null);
   const [fatherId, setFatherId] = useState<string | null>(null);
   const [motherId, setMotherId] = useState<string | null>(null);
-  const [partnerId, setPartnerId] = useState<string | null>(null);
+  const [partnerIds, setPartnerIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  function showPermissionToast() {
+  const handlePartnerSelect = (id: string) => {
+    setPartnerIds((prevPartnerIds) =>
+      prevPartnerIds.includes(id)
+        ? prevPartnerIds.filter((partnerId) => partnerId !== id)
+        : [...prevPartnerIds, id]
+    );
+  };
+
+  const handleAddPartner = () => {
+    setPartnerIds([...partnerIds, ""]); // Add an empty string for a new partner field
+  };
+  const handlePartnerChange = (index: number, value: string) => {
+    const updatedPids = [...partnerIds];
+    updatedPids[index] = value;
+    setPartnerIds(updatedPids);
+  };
+
+  const handleRemovePartner = (index: number) => {
+    const updatedPids = partnerIds.filter((_, i) => i !== index);
+    setPartnerIds(updatedPids);
+  };
+
+  const showPermissionToast = () => {
     toast({
       title: "Insufficient permissions",
       description: "please, contact admin",
       variant: "destructive",
     });
-  }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,9 +74,9 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
         gender,
         phone,
         dob,
+        pids: partnerIds.filter(Boolean),
         fid: fatherId && fatherId !== "unassigned" ? [fatherId] : [],
         mid: motherId && motherId !== "unassigned" ? [motherId] : [],
-        pids: partnerId && partnerId !== "unassigned" ? [partnerId] : [],
         img: null,
       };
 
@@ -105,6 +127,11 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       setImage(null);
     }
   };
+
+  // const partnerOptions = existingNodes.map((node) => ({
+  //   value: node.id,
+  //   label: node.name,
+  // }));
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -191,22 +218,41 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
           </SelectContent>
         </Select>
       </div>
+
       <div>
-        <Label htmlFor="partnerId">Partner</Label>
-        <Select onValueChange={setPartnerId} value={partnerId || undefined}>
+        <Label htmlFor="partnerIds">Partners</Label>
+        <Select>
           <SelectTrigger>
-            <SelectValue placeholder="Select partner" />
+            <SelectValue
+              placeholder={
+                partnerIds.length > 0
+                  ? `${partnerIds.length} selected`
+                  : "Select partners"
+              }
+            />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="unassigned">None</SelectItem>
             {existingNodes.map((node) => (
-              <SelectItem key={node.id} value={node.id}>
-                {node.name}
+              <SelectItem
+                key={node.id}
+                value={node.id}
+                onClick={() => handlePartnerSelect(node.id)}
+              >
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={partnerIds.includes(node.id)}
+                    readOnly
+                    className="mr-2"
+                  />
+                  {node.name}
+                </div>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+
       <div className="flex justify-between">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting ? "Adding..." : "Add Member"}
