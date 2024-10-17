@@ -1,5 +1,5 @@
 import { db, storage } from '@/firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc,getDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { FamilyMember } from '@/types/familyTypes';
 
@@ -42,8 +42,16 @@ export const addFamilyMember = async (newMember: FamilyMember, image: File | nul
 };
 
 export const updateFamilyMember = async (memberId: string, updates: Partial<FamilyMember>) => {
-  try {
-    await updateDoc(doc(db, "familyMembers", memberId), updates);
+   try {
+    const memberRef = doc(db, "familyMembers", memberId);
+    const memberSnapshot = await getDoc(memberRef);
+
+    const currentData = memberSnapshot.data();
+    if (updates.pids) {
+      updates.pids = [...currentData.pids, ...updates.pids];  // Append new partners
+    }
+
+    await updateDoc(memberRef, updates);
   } catch (error) {
     console.error("Error updating document: ", error);
     throw error;
