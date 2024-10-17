@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import FamilyTree from "@/family-tree/wrapper";
-
 import { Button } from "@/components/ui/button";
 import AddMemberForm from "@/forms/AddMemberForm";
 import { useFamilyTree } from "@/hooks/useFamilyTree";
@@ -11,39 +10,54 @@ import {
   getRootFamilyMember,
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
-import { DebugInfo } from "./DebugInfo";
 import useFamilyStore from "@/store/globalFamily";
-
-import {
-  GearIcon,
-  Cross1Icon
-} from "@radix-ui/react-icons"
+import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
+import imageCompression from "browser-image-compression";
 
 const FamilyTreeComponent: React.FC = () => {
   const divRef = useRef<HTMLDivElement>(null);
   const familyTreeRef = useRef<FamilyTree | null>(null);
   const { nodes, loading, error } = useFamilyTree();
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
-  const [debugInfo, setDebugInfo] = useState<string>("");
+  const { toast } = useToast();
 
   const user = useFamilyStore((state) => state.user);
 
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
-
-  const [isSetting, setIsSetting] = useState(false)
+  const [isSetting, setIsSetting] = useState(false);
 
   useEffect(() => {
     async function rootNodeSelector() {
       const rootFamilyMember = await getRootFamilyMember();
-      if (rootFamilyMember.length > 0){
+      if (rootFamilyMember.length > 0) {
         setSelectedNode(rootFamilyMember[0].id);
-      }else{
+      } else {
         setSelectedNode(null);
       }
     }
     rootNodeSelector();
   }, []);
+
+  const imageHandler = async (file: File) => {
+    const options = {
+      maxSizeMB: 0.2,
+      useWebWorker: true,
+    };
+    try {
+      const compressedFile = await imageCompression(file, options);
+      console.log(compressedFile);
+      return compressedFile;
+    } catch (error) {
+      console.error("Error compressing image: ", error);
+      toast({
+        title: "Error",
+        description: "Failed to compress image",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
 
   useEffect(() => {
     if (divRef.current && nodes.length > 0 && !loading) {
@@ -58,6 +72,8 @@ const FamilyTreeComponent: React.FC = () => {
             id: node.id,
             name: node.name ?? "",
             gender: node.gender ?? "",
+            dob: node.dob ?? "",
+            phone: node.phone ?? "",
           };
           if (node.img) {
             obj["img"] = node.img;
@@ -68,7 +84,7 @@ const FamilyTreeComponent: React.FC = () => {
           if (node.mid?.length > 0) {
             obj["mid"] = node.mid;
           }
-          if (node.pids) {
+          if (node.pids && node.pids.length > 0) {
             obj["pids"] = node.pids;
           }
           return obj;
@@ -76,7 +92,7 @@ const FamilyTreeComponent: React.FC = () => {
 
         const f = new FamilyTree(divRef.current, {
           nodes: newNode,
-          template: "rabin",
+          template: "atul",
           nodeBinding: {
             field_0: "name",
             img_0: "img",
@@ -89,78 +105,109 @@ const FamilyTreeComponent: React.FC = () => {
             fit: true,
           },
           roots: selectedNode ? [selectedNode] : [],
+          editForm: {
+            elements: [
+              { type: "textbox", label: "Full Name", binding: "name" },
+              { type: "textbox", label: "Gender", binding: "gender" },
+              [
+                { type: "textbox", label: "Phone", binding: "phone" },
+                { type: "date", label: "Date Of Birth", binding: "dob" },
+              ],
+              {
+                type: "textbox",
+                label: "Image Url",
+                binding: "img",
+                btn: "Upload",
+              },
+            ],
+            buttons: {
+              pdf: null,
+            },
+            addMore: "",
+          },
         });
 
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
-
-        setDebugInfo("Family tree initialized successfully");
       } catch (err) {
         console.error("Error initializing family tree:", err);
-        setDebugInfo(`Error initializing family tree: ${err}`);
       }
     }
   }, [nodes, loading]);
   const {toast} = useToast()
 
-  function showPremissionToast(){
+  const showPermissionToast = () => {
     toast({
       title: "Insufficient permissions",
-      description: "please, contact admin",
-      variant: "destructive"
-    })
-  }
+      description: "Please contact admin",
+      variant: "destructive",
+    });
+  };
 
   type argsType = {
     addNodesData: Array<object>;
-    updateNodesData: Array<{[key: string]: string}>;
+    updateNodesData: Array<{ [key: string]: string }>;
     removeNodeId: number | string;
   };
 
   const handleEdit = async (args: argsType) => {
     console.log("Edit node:", args);
 
-      if (args.updateNodesData.length > 0) {
-        const nodesToEdit = args.updateNodesData;
-        nodesToEdit.forEach((node) => {
-          updateFamilyMember(node.id, {
+    if (args.updateNodesData.length > 0) {
+      const nodesToEdit = args.updateNodesData;
+      for (const node of nodesToEdit) {
+        try {
+          await updateFamilyMember(node.id, {
             name: node.name,
             gender: node.gender,
             img: node.img,
-          }).catch((error) => {
-            if (error.code == "permission-denied") {
-              console.error("Insufficient permissions to update the document.");
-              showPremissionToast()
-            } else {
-              console.error("Error updating document: ", error);
-            }
+            phone: node.phone,
+            dob: node.dob,
           });
-        });
+        } catch (error) {
+          if (error.code === "permission-denied") {
+            console.error("Insufficient permissions to update the document.");
+            showPermissionToast();
+          } else {
+            console.error("Error updating document: ", error);
+            toast({
+              title: "Error",
+              description: "Failed to update family member",
+              variant: "destructive",
+            });
+          }
+        }
       }
-
-    if(args.removeNodeId !== null) {
-      try{
-        const s = await deleteFamilyMember(args.removeNodeId.toString());
-        console.log("Document successfully removed!");
-        console.log(s);
-        return true;
-      }
-      catch(error){
-    if (error.code == "permission-denied") {
-      showPremissionToast()
-    } else {
-      console.error("Error removing document: ", error);
     }
+
+    if (args.removeNodeId !== null) {
+      try {
+        await deleteFamilyMember(args.removeNodeId.toString());
+        console.log("Document successfully removed!");
+        toast({
+          title: "Success",
+          description: "Family member removed successfully",
+        });
+        return true;
+      } catch (error) {
+        if (error.code === "permission-denied") {
+          showPermissionToast();
+        } else {
+          console.error("Error removing document: ", error);
+          toast({
+            title: "Error",
+            description: "Failed to remove family member",
+            variant: "destructive",
+          });
+        }
       }
     }
     return false;
   };
 
   const handleAdd = () => {
-    console.log("Add new member");
     setIsAddFormOpen(true);
   };
-
 
   const setRootNode = () => {
     if (!familyTreeRef.current || !selectedNode) return;
@@ -175,82 +222,99 @@ const FamilyTreeComponent: React.FC = () => {
       });
   };
 
-  const handleAddMember = (newMember: FamilyMember) => {
+  const handleFormSubmit = (newMember: FamilyMember) => {
     setIsAddFormOpen(false);
     console.log("New member added:", newMember);
   };
 
   if (loading) {
-    return       <div className="loading-container">
-    <div className="spinner"></div>
-    <p>Loading...</p>
-  </div>
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
   if (error) {
-    return <div>Error loading family tree data: {error}</div>;
+    return (
+      <div className="text-center text-red-500 p-4">
+        Error loading family tree data: {error}
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col md:flex-row w-full h-screen">
+    <div className="flex w-full h-screen">
       <div
-        className={"w-full h-full " +  (isSetting ? "md:w-3/4" : "")}
-        style={{ height: "100vh" }}
-        ref={divRef}
-      ></div>
-      {user && (
-        <>
-        {isSetting ? (
-                <div className="w-full md:w-1/4 p-4 bg-gray-100">
-                  <div>
-                    <Button onClick={()=> setIsSetting(false)}>
-                      <Cross1Icon />
-                    </Button>
-                  </div>
-                <div className="mb-4">
-                  <label htmlFor="rootNodeSelect" className="block mb-2">
-                    Select Root Node:
-                  </label>
-                  <select
-                    id="rootNodeSelect"
-                    className="w-full p-2 border border-gray-300 rounded"
-                    onChange={(e) => {
-                      const selectedNodeId = e.target.value;
-                      setSelectedNode(selectedNodeId);
-                    }}
-                  >
-                    {nodes.map((node) => (
-                      <option
-                        key={node.id}
-                        value={node.id}
-                        selected={selectedNode === node.id}
-                      >
-                        {node.name}
-                      </option>
-                    ))}
-                  </select>
-                  <Button className="mb-4" onClick={setRootNode}>
-                    Set as Root Node
-                  </Button>
-                </div>
-                <Button onClick={handleAdd} className="mb-4">
-                  Add Member
-                </Button>
-                {isAddFormOpen && (
-                  <AddMemberForm
-                    onSubmit={handleAddMember}
-                    onCancel={() => setIsAddFormOpen(false)}
-                    existingNodes={nodes}
-                  />
-                )}
-                {/* <DebugInfo info={debugInfo} nodeCount={nodes.length} /> */}
-              </div>
-        ):(
-          <Button className="mt-7 mr-5 absolute top-14 ml-3" onClick={()=> setIsSetting(true)} variant="default" size="icon">
-            <GearIcon  />
+        className={`fixed top-0 left-0 w-full md:w-1/5 h-full bg-white shadow-lg p-4 transition-transform duration-300 ease-in-out z-50 ${
+          isSetting ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <Button
+            onClick={() => setIsSetting(false)}
+            variant="ghost"
+            size="icon"
+          >
+            <Cross1Icon />
+          </Button>
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label
+              htmlFor="rootNodeSelect"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Select Root Node:
+            </label>
+            <select
+              id="rootNodeSelect"
+              className="w-full p-2 border border-gray-300 rounded"
+              onChange={(e) => setSelectedNode(e.target.value)}
+              value={selectedNode || ""}
+            >
+              {nodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  {node.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button onClick={setRootNode} className="w-full">
+            Set as Root Node
+          </Button>
+          <Button onClick={handleAdd} className="w-full">
+            Add Member
+          </Button>
+        </div>
+      </div>
+      <div className="flex-1 relative">
+        <div
+          className="w-full h-full"
+          style={{ height: "100vh" }}
+          ref={divRef}
+        ></div>
+        {!isSetting && (
+          <Button
+            className="absolute bottom-4 left-3"
+            onClick={() => setIsSetting(true)}
+            variant="default"
+            size="icon"
+          >
+            <GearIcon />
           </Button>
         )}
-        </>
+      </div>
+      {isAddFormOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 transition-transform duration-500 ease-in-out">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md ">
+            <AddMemberForm
+              onSubmit={handleFormSubmit}
+              onCancel={() => setIsAddFormOpen(false)}
+              existingNodes={nodes}
+            />
+          </div>
+        </div>
       )}
     </div>
   );
