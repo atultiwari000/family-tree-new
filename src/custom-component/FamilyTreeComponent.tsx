@@ -26,7 +26,6 @@ const FamilyTreeComponent: React.FC = () => {
   const { nodes, loading, error } = useFamilyTree();
   const [isAddFormOpen, setIsAddFormOpen] = useState(false);
   const [debugInfo, setDebugInfo] = useState<string>("");
-  const {toast} = useToast()
 
   const user = useFamilyStore((state) => state.user);
 
@@ -102,6 +101,7 @@ const FamilyTreeComponent: React.FC = () => {
       }
     }
   }, [nodes, loading]);
+  const {toast} = useToast()
 
   function showPremissionToast(){
     toast({
