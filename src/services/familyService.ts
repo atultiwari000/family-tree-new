@@ -59,7 +59,7 @@ export const updateFamilyMember = async (memberId: string, updates: Partial<Fami
 
     const currentData = memberSnapshot.data();
     if (updates.pids) {
-      updates.pids = [...currentData.pids, ...updates.pids];  // Append new partners
+      updates.pids = [...(currentData.pids || []), ...updates.pids];  // Append new partners
     }
 
     await updateDoc(memberRef, updates);
