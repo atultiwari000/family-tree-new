@@ -13,6 +13,7 @@ import { addFamilyMember } from "@/services/familyService";
 import { FamilyMember, AddMemberFormProps } from "@/types/familyTypes";
 import imageCompression from "browser-image-compression";
 import { useToast } from "@/hooks/use-toast";
+import ReactSelect from "react-select";
 
 const AddMemberForm: React.FC<AddMemberFormProps> = ({
   onSubmit,
@@ -30,26 +31,10 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handlePartnerSelect = (id: string) => {
-    setPartnerIds((prevPartnerIds) =>
-      prevPartnerIds.includes(id)
-        ? prevPartnerIds.filter((partnerId) => partnerId !== id)
-        : [...prevPartnerIds, id]
+  const handlePartnerSelect = (selectedOptions: any) => {
+    setPartnerIds(
+      selectedOptions ? selectedOptions.map((option: any) => option.value) : []
     );
-  };
-
-  const handleAddPartner = () => {
-    setPartnerIds([...partnerIds, ""]); // Add an empty string for a new partner field
-  };
-  const handlePartnerChange = (index: number, value: string) => {
-    const updatedPids = [...partnerIds];
-    updatedPids[index] = value;
-    setPartnerIds(updatedPids);
-  };
-
-  const handleRemovePartner = (index: number) => {
-    const updatedPids = partnerIds.filter((_, i) => i !== index);
-    setPartnerIds(updatedPids);
   };
 
   const showPermissionToast = () => {
@@ -74,7 +59,7 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
         gender,
         phone,
         dob,
-        pids: partnerIds.filter(Boolean),
+        pids: partnerIds,
         fid: fatherId && fatherId !== "unassigned" ? [fatherId] : [],
         mid: motherId && motherId !== "unassigned" ? [motherId] : [],
         img: null,
@@ -128,13 +113,8 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
     }
   };
 
-  // const partnerOptions = existingNodes.map((node) => ({
-  //   value: node.id,
-  //   label: node.name,
-  // }));
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4 overflow-y-auto">
       <div>
         <Label htmlFor="name">Name</Label>
         <Input
@@ -221,36 +201,15 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
 
       <div>
         <Label htmlFor="partnerIds">Partners</Label>
-        <Select>
-          <SelectTrigger>
-            <SelectValue
-              placeholder={
-                partnerIds.length > 0
-                  ? `${partnerIds.length} selected`
-                  : "Select partners"
-              }
-            />
-          </SelectTrigger>
-          <SelectContent>
-            {existingNodes.map((node) => (
-              <SelectItem
-                key={node.id}
-                value={node.id}
-                onClick={() => handlePartnerSelect(node.id)}
-              >
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={partnerIds.includes(node.id)}
-                    readOnly
-                    className="mr-2"
-                  />
-                  {node.name}
-                </div>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <ReactSelect
+          isMulti
+          name="partners"
+          options={existingNodes.map((node) => ({
+            value: node.id,
+            label: node.name,
+          }))}
+          onChange={handlePartnerSelect}
+        />
       </div>
 
       <div className="flex justify-between">
