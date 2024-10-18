@@ -8,6 +8,7 @@ import {
   deleteFamilyMember,
   setRootFamilyMember,
   getRootFamilyMember,
+  uploadPhoto,
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
@@ -105,10 +106,35 @@ const FamilyTreeComponent: React.FC = () => {
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
         familyTreeRef.current.editUI.on('element-btn-click', function (sender, args) {
-          FamilyTree.fileUploadDialog(function (file) {
-              let formData = new FormData();
-              formData.append('file', file);
-              alert('upload the file');
+          FamilyTree.fileUploadDialog(async function (file) {
+            const options = {
+              maxSizeMB: 0.2,
+              useWebWorker: true,
+            };
+            try {
+              toast({
+                title: "Uploading Image",
+                description: "We are uploading your image, wait for a moment",
+              })
+              const compressedFile = await imageCompression(file, options);
+              const imageUrl = await uploadPhoto(compressedFile);
+              let nodeId = args.nodeId;
+              updateFamilyMember(nodeId, { img: imageUrl }).then(() => {
+                toast({
+                  title: "Success",
+                  description: "Image uploaded successfully",
+                  
+                });
+              })
+              console.log(sender, args)
+            } catch (error) {
+              console.error("Error compressing image: ", error);
+              toast({
+                title: "Error",
+                description: "Failed to compress image",
+                variant: "destructive",
+              });
+            }
           })
       });
       } catch (err) {

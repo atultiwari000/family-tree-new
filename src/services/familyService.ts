@@ -3,6 +3,17 @@ import { collection, addDoc,getDoc, deleteDoc, doc, updateDoc, getDocs,where,que
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { FamilyMember } from '@/types/familyTypes';
 
+export const uploadPhoto = async (image: File) => {
+  try {
+    const storageRef = ref(storage, `images/${Date.now()}_${image.name}`);
+    await uploadBytes(storageRef, image);
+    return await getDownloadURL(storageRef);
+  } catch (error) {
+    console.error("Error uploading image: ", error);
+    throw error;
+  }
+}
+
 export const addFamilyMember = async (newMember: FamilyMember, image: File | null) => {
   let imageUrl = "";
   if (image) {
