@@ -89,16 +89,11 @@ const FamilyTreeComponent: React.FC = () => {
             elements: [
               { type: "textbox", label: "Full Name", binding: "name" },
               { type: "textbox", label: "Gender", binding: "gender" },
+              { type: 'textbox', label: 'Photo Url', binding: 'img', btn: 'Upload' },
               [
                 { type: "textbox", label: "Phone", binding: "phone" },
                 { type: "date", label: "Date Of Birth", binding: "dob" },
               ],
-              {
-                type: "textbox",
-                label: "Image Url",
-                binding: "img",
-                btn: "Upload",
-              },
             ],
             buttons: {
               pdf: null,
@@ -109,6 +104,13 @@ const FamilyTreeComponent: React.FC = () => {
 
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
+        familyTreeRef.current.editUI.on('element-btn-click', function (sender, args) {
+          FamilyTree.fileUploadDialog(function (file) {
+              let formData = new FormData();
+              formData.append('file', file);
+              alert('upload the file');
+          })
+      });
       } catch (err) {
         console.error("Error initializing family tree:", err);
       }
