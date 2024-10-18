@@ -109,9 +109,6 @@ const FamilyTreeComponent: React.FC = () => {
                 { type: "date", label: "Date Of Birth", binding: "dob" },
               ],
             ],
-            buttons: {
-              pdf: null,
-            },
             addMore: "",
           },
         });
