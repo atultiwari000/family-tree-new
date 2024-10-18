@@ -53,8 +53,6 @@ FamilyTree.templates.atul.field_0 =
 {/* <text ' + FamilyTree.attr.width + ' ="230" style="font-size: 16px;font-weight:bold;" fill="#aeaeae" x="60" y="135" text-anchor="middle">{val}</text> */}
 FamilyTree.templates.atul.field_0 = 
     '<text data-text-overflow="multiline" data-width="100" style="font-size: 13px;font-weight:bold;"  fill="#aeaeae" x="60" y="150" text-anchor="middle">{val}</text>';
-    FamilyTree.templates.atul.field_1 = 
-    '<text data-text-overflow="multiline" data-width="100" style="font-size: 13px;font-weight:bold;"  fill="#aeaeae" x="60" y="150" text-anchor="middle">{val}</text>';
 FamilyTree.templates.atul.node = '<use x="0" y="0" xlink:href="#circle" />';
 FamilyTree.templates.atul.img_0 = 
     '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#atul_img_0)" xlink:href="{val}" x="6" y="6" width="108" height="108"></image>';

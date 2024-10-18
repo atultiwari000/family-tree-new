@@ -151,3 +151,42 @@ export const getRootFamilyMember = async () => {
     throw error;
   }
 };
+
+export function getFamilyInfo(data: any, userId: string) {
+  // Find the user by ID
+  const user = data.find(member => member.id === userId);
+  
+  // If user not found, return early with a message
+  if (!user) {
+    return { error: "User not found" };
+  }
+
+  // Helper function to find a family member by ID
+  const findById = (id: number | undefined) => data.find(member => member.id === id);
+
+  // Get the partner(s)
+  const partners = user.pids.map(findById).filter(Boolean); // Safely handle empty array
+
+  // Get the first parent IDs (from mid and fid arrays)
+  const motherId = user.mid[0]; // First element of mid array
+  const fatherId = user.fid[0]; // First element of fid array
+
+  // Get children (those whose father or mother matches the user's ID)
+  const children = data.filter(member => member.fid[0] === user.id || member.mid[0] === user.id);
+
+  // Get grandchildren (children of the user's children)
+  const grandchildren = children
+    .map(child => data.filter(member => member.fid[0] === child.id || member.mid[0] === child.id))
+    .flat();
+
+  return {
+    user: user.name,
+    partners: partners.map(partner => partner?.name),
+    children: children.map(child => child.name),
+    grandchildren: grandchildren.map(grandchild => grandchild.name),
+    parents: {
+      mother: motherId ? findById(motherId)?.name : undefined,
+      father: fatherId ? findById(fatherId)?.name : undefined,
+    }
+  }
+}

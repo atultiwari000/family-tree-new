@@ -9,6 +9,7 @@ import {
   setRootFamilyMember,
   getRootFamilyMember,
   uploadPhoto,
+  getFamilyInfo,
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
@@ -47,15 +48,23 @@ const FamilyTreeComponent: React.FC = () => {
           familyTreeRef.current.destroy();
           divRef.current.innerHTML = "";
         }
-
+  
+        // Prepare newNode data using getFamilyInfo
         const newNode = nodes.map((node) => {
+          // Get family info for this node (user)
+          const familyInfo = getFamilyInfo(nodes, node.id);
+          
           const obj = {
             id: node.id,
             name: node.name ?? "",
             gender: node.gender ?? "",
             dob: node.dob ?? "",
             phone: node.phone ?? "",
+            partner: familyInfo?.partners.join(", ") ?? "", // Partner(s) info
+            children: familyInfo?.children.join(", ") ?? "", // Children info
+            grandchildren: familyInfo?.grandchildren.join(", ") ?? "", // Grandchildren info
           };
+  
           if (node.img) {
             obj["img"] = node.img;
           }
@@ -70,13 +79,16 @@ const FamilyTreeComponent: React.FC = () => {
           }
           return obj;
         });
-
+  
         const f = new FamilyTree(divRef.current, {
           nodes: newNode,
           template: "atul",
           nodeBinding: {
-            field_0: "name",
-            img_0: "img",
+            field_0: "name",  // Bind name to field_0
+            field_1: "partner",  // Add partner information
+            field_2: "children",  // Add children information
+            field_3: "grandchildren",  // Add grandchildren information
+            img_0: "img", // Bind image
           },
           levelSeparation: 100,
           siblingSeparation: 50,
@@ -86,6 +98,7 @@ const FamilyTreeComponent: React.FC = () => {
             fit: true,
           },
           roots: selectedNode ? [selectedNode] : [],
+  
           editForm: {
             elements: [
               { type: "textbox", label: "Full Name", binding: "name" },
@@ -102,7 +115,7 @@ const FamilyTreeComponent: React.FC = () => {
             addMore: "",
           },
         });
-
+  
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
         familyTreeRef.current.editUI.on('element-btn-click', function (sender, args) {
@@ -123,10 +136,8 @@ const FamilyTreeComponent: React.FC = () => {
                 toast({
                   title: "Success",
                   description: "Image uploaded successfully",
-                  
                 });
               })
-              console.log(sender, args)
             } catch (error) {
               console.error("Error compressing image: ", error);
               toast({
@@ -136,7 +147,7 @@ const FamilyTreeComponent: React.FC = () => {
               });
             }
           })
-      });
+        });
       } catch (err) {
         console.error("Error initializing family tree:", err);
       }
