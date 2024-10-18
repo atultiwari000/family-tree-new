@@ -1,5 +1,5 @@
 import { db, storage } from '@/firebase';
-import { collection, addDoc, deleteDoc, doc, updateDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc, getDocs,where,query } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { FamilyMember } from '@/types/familyTypes';
 
@@ -57,13 +57,54 @@ export const deleteFamilyMember = async (memberId: string) => {
     const memberToDelete = memberSnapshot.docs.find(doc => doc.id === memberId)?.data() as FamilyMember;
 
     if (memberToDelete.img) {
-      const imageRef = ref(storage, memberToDelete.img);
-      await deleteObject(imageRef);
+      try{
+        const imageRef = ref(storage, memberToDelete.img);
+        await deleteObject(imageRef);
+      }
+      catch (error) {
+        console.error("Error removing image: ", error);
+      }
     }
 
     await deleteDoc(memberRef);
+    await clearNoExistantData();
   } catch (error) {
     console.error("Error removing document: ", error);
+    throw error;
+  }
+};
+
+export const clearNoExistantData = async () => {
+  try {
+    const querySnapshot = await getDocs(collection(db, "familyMembers"));
+    querySnapshot.forEach(async (doc) => {
+      const member = doc.data() as FamilyMember;
+      if (member.fid?.length) {
+        const fatherSnapshot = await getDocs(collection(db, "familyMembers"));
+        console.log("f:",fatherSnapshot.docs)
+        if (!fatherSnapshot.docs.find(father => father.id === member.fid[0])) {
+          await updateFamilyMember(doc.id, { fid: [] });
+        }
+      }
+      if (member.mid?.length) {
+        const q = query(collection(db, "familyMembers"), where("capital", "==", true));
+        const motherSnapshot = await getDocs(collection(db, "familyMembers"));
+        motherSnapshot.forEach(doc => {
+          console.log(doc.id, " => ", doc.data());
+        });
+        if (!motherSnapshot.docs.find(mother => mother.id === member.mid[0])) {
+          await updateFamilyMember(doc.id, { mid: [] });
+        }
+      }
+      if (member.pids?.length) {
+        const partnerSnapshot = await getDocs(collection(db, "familyMembers"));
+        console.log("p:",partnerSnapshot.docs)
+        const updatedPartners = member.pids.filter(partner => partnerSnapshot.docs.find(p => p.id === partner));
+        await updateFamilyMember(doc.id, { pids: updatedPartners });
+      }
+    });
+  } catch (error) {
+    console.error("Error clearing no existant data: ", error);
     throw error;
   }
 };

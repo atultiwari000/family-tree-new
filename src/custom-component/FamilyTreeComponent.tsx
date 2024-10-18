@@ -39,26 +39,6 @@ const FamilyTreeComponent: React.FC = () => {
     rootNodeSelector();
   }, []);
 
-  const imageHandler = async (file: File) => {
-    const options = {
-      maxSizeMB: 0.2,
-      useWebWorker: true,
-    };
-    try {
-      const compressedFile = await imageCompression(file, options);
-      console.log(compressedFile);
-      return compressedFile;
-    } catch (error) {
-      console.error("Error compressing image: ", error);
-      toast({
-        title: "Error",
-        description: "Failed to compress image",
-        variant: "destructive",
-      });
-      return null;
-    }
-  };
-
   useEffect(() => {
     if (divRef.current && nodes.length > 0 && !loading) {
       try {
@@ -134,7 +114,7 @@ const FamilyTreeComponent: React.FC = () => {
       }
     }
   }, [nodes, loading]);
-  const {toast} = useToast()
+
 
   const showPermissionToast = () => {
     toast({
