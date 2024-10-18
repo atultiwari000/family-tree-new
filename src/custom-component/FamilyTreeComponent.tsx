@@ -90,59 +90,62 @@ const FamilyTreeComponent: React.FC = () => {
             elements: [
               { type: "textbox", label: "Full Name", binding: "name" },
               { type: "textbox", label: "Gender", binding: "gender" },
-              { type: 'textbox', label: 'Photo Url', binding: 'img', btn: 'Upload' },
+              {
+                type: "textbox",
+                label: "Photo Url",
+                binding: "img",
+                btn: "Upload",
+              },
               [
                 { type: "textbox", label: "Phone", binding: "phone" },
                 { type: "date", label: "Date Of Birth", binding: "dob" },
               ],
             ],
-            buttons: {
-              pdf: null,
-            },
             addMore: "",
           },
         });
 
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
-        familyTreeRef.current.editUI.on('element-btn-click', function (sender, args) {
-          FamilyTree.fileUploadDialog(async function (file) {
-            const options = {
-              maxSizeMB: 0.2,
-              useWebWorker: true,
-            };
-            try {
-              toast({
-                title: "Uploading Image",
-                description: "We are uploading your image, wait for a moment",
-              })
-              const compressedFile = await imageCompression(file, options);
-              const imageUrl = await uploadPhoto(compressedFile);
-              let nodeId = args.nodeId;
-              updateFamilyMember(nodeId, { img: imageUrl }).then(() => {
+        familyTreeRef.current.editUI.on(
+          "element-btn-click",
+          function (sender, args) {
+            FamilyTree.fileUploadDialog(async function (file) {
+              const options = {
+                maxSizeMB: 0.2,
+                useWebWorker: true,
+              };
+              try {
                 toast({
-                  title: "Success",
-                  description: "Image uploaded successfully",
-                  
+                  title: "Uploading Image",
+                  description: "We are uploading your image, wait for a moment",
                 });
-              })
-              console.log(sender, args)
-            } catch (error) {
-              console.error("Error compressing image: ", error);
-              toast({
-                title: "Error",
-                description: "Failed to compress image",
-                variant: "destructive",
-              });
-            }
-          })
-      });
+                const compressedFile = await imageCompression(file, options);
+                const imageUrl = await uploadPhoto(compressedFile);
+                let nodeId = args.nodeId;
+                updateFamilyMember(nodeId, { img: imageUrl }).then(() => {
+                  toast({
+                    title: "Success",
+                    description: "Image uploaded successfully",
+                  });
+                });
+                console.log(sender, args);
+              } catch (error) {
+                console.error("Error compressing image: ", error);
+                toast({
+                  title: "Error",
+                  description: "Failed to compress image",
+                  variant: "destructive",
+                });
+              }
+            });
+          }
+        );
       } catch (err) {
         console.error("Error initializing family tree:", err);
       }
     }
   }, [nodes, loading]);
-
 
   const showPermissionToast = () => {
     toast({
