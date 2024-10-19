@@ -51,8 +51,22 @@ FamilyTree.templates.atul.field_0 =
 // `;
 
 {/* <text ' + FamilyTree.attr.width + ' ="230" style="font-size: 16px;font-weight:bold;" fill="#aeaeae" x="60" y="135" text-anchor="middle">{val}</text> */}
-FamilyTree.templates.atul.field_0 = 
-    '<text data-text-overflow="multiline" data-width="100" style="font-size: 13px;font-weight:bold;"  fill="#aeaeae" x="60" y="150" text-anchor="middle">{val}</text>';
+FamilyTree.templates.atul.field_0 = `
+        <foreignObject x="-10" y="125" width="130" height="40">
+            <div xmlns="http://www.w3.org/1999/xhtml" 
+                style="background-color:#f0f0f0; 
+                       text-align:center; 
+                       font-size:13px; 
+                       font-weight:bold; 
+                       line-height:20px; 
+                       white-space:wrap; 
+                       overflow:hidden; 
+                       text-overflow:ellipsis;">
+                {val}
+            </div>
+        </foreignObject>
+`;
+
 FamilyTree.templates.atul.node = '<use x="0" y="0" xlink:href="#circle" />';
 FamilyTree.templates.atul.img_0 = 
     '<image preserveAspectRatio="xMidYMid slice" clip-path="url(#atul_img_0)" xlink:href="{val}" x="6" y="6" width="108" height="108"></image>';
