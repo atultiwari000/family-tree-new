@@ -10,6 +10,7 @@ import {
   getRootFamilyMember,
   uploadPhoto,
   getFamilyInfo,
+  clearNoExistantData,
 } from "@/services/familyService";
 import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
@@ -43,6 +44,7 @@ const FamilyTreeComponent: React.FC = () => {
 
   useEffect(() => {
     if (divRef.current && nodes.length > 0 && !loading) {
+      clearNoExistantData();
       try {
         if (familyTreeRef.current) {
           familyTreeRef.current.destroy();

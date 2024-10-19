@@ -69,6 +69,16 @@ export const updateFamilyMember = async (memberId: string, updates: Partial<Fami
   }
 };
 
+export const setFamilyMember = async (memberId: string, updates: Partial<FamilyMember>) => {
+  try {
+    const memberRef = doc(db, "familyMembers", memberId);
+    await updateDoc(memberRef, updates);
+  } catch (error) {
+    console.error("Error setting document: ", error);
+    throw error;
+  }
+}
+
 export const deleteFamilyMember = async (memberId: string) => {
   try {
     const memberRef = doc(db, "familyMembers", memberId);
@@ -100,26 +110,27 @@ export const clearNoExistantData = async () => {
       const member = doc.data() as FamilyMember;
       if (member.fid?.length) {
         const fatherSnapshot = await getDocs(collection(db, "familyMembers"));
-        console.log("f:",fatherSnapshot.docs)
         if (!fatherSnapshot.docs.find(father => father.id === member.fid[0])) {
-          await updateFamilyMember(doc.id, { fid: [] });
+          await setFamilyMember(doc.id, { fid: [] });
         }
       }
       if (member.mid?.length) {
         const q = query(collection(db, "familyMembers"), where("capital", "==", true));
         const motherSnapshot = await getDocs(collection(db, "familyMembers"));
-        motherSnapshot.forEach(doc => {
-          console.log(doc.id, " => ", doc.data());
-        });
+
         if (!motherSnapshot.docs.find(mother => mother.id === member.mid[0])) {
-          await updateFamilyMember(doc.id, { mid: [] });
+          await setFamilyMember(doc.id, { mid: [] });
         }
       }
       if (member.pids?.length) {
         const partnerSnapshot = await getDocs(collection(db, "familyMembers"));
-        console.log("p:",partnerSnapshot.docs)
         const updatedPartners = member.pids.filter(partner => partnerSnapshot.docs.find(p => p.id === partner));
-        await updateFamilyMember(doc.id, { pids: updatedPartners });
+        const uniquePartners = [...new Set(updatedPartners)];
+        if (updatedPartners.length === uniquePartners.length) {
+          return;
+        }        
+        console.log("Unique partners: ", uniquePartners);
+        await setFamilyMember(doc.id, { pids: uniquePartners });
       }
     });
   } catch (error) {
