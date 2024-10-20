@@ -50,12 +50,12 @@ const FamilyTreeComponent: React.FC = () => {
           familyTreeRef.current.destroy();
           divRef.current.innerHTML = "";
         }
-
+  
         // Prepare newNode data using getFamilyInfo
         const newNode = nodes.map((node) => {
           // Get family info for this node (user)
           const familyInfo = getFamilyInfo(nodes, node.id);
-
+          
           const obj = {
             id: node.id,
             name: node.name ?? "",
@@ -66,7 +66,7 @@ const FamilyTreeComponent: React.FC = () => {
             children: familyInfo?.children.join(", ") ?? "", // Children info
             grandchildren: familyInfo?.grandchildren.join(", ") ?? "", // Grandchildren info
           };
-
+  
           if (node.img) {
             obj["img"] = node.img;
           }
@@ -81,15 +81,15 @@ const FamilyTreeComponent: React.FC = () => {
           }
           return obj;
         });
-
+  
         const f = new FamilyTree(divRef.current, {
           nodes: newNode,
           template: "atul",
           nodeBinding: {
-            field_0: "name", // Bind name to field_0
-            field_1: "partner", // Add partner information
-            field_2: "children", // Add children information
-            field_3: "grandchildren", // Add grandchildren information
+            field_0: "name",  // Bind name to field_0
+            field_1: "partner",  // Add partner information
+            field_2: "children",  // Add children information
+            field_3: "grandchildren",  // Add grandchildren information
             img_0: "img", // Bind image
           },
           levelSeparation: 100,
@@ -100,17 +100,12 @@ const FamilyTreeComponent: React.FC = () => {
             fit: true,
           },
           roots: selectedNode ? [selectedNode] : [],
-
+  
           editForm: {
             elements: [
               { type: "textbox", label: "Full Name", binding: "name" },
               { type: "textbox", label: "Gender", binding: "gender" },
-              {
-                type: "textbox",
-                label: "Photo Url",
-                binding: "img",
-                btn: "Upload",
-              },
+              { type: 'textbox', label: 'Photo Url', binding: 'img', btn: 'Upload' },
               [
                 { type: "textbox", label: "Phone", binding: "phone" },
                 { type: "date", label: "Date Of Birth", binding: "dob" },
@@ -119,47 +114,45 @@ const FamilyTreeComponent: React.FC = () => {
             addMore: "",
           },
         });
-
+  
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
-        familyTreeRef.current.editUI.on(
-          "element-btn-click",
-          function (sender, args) {
-            FamilyTree.fileUploadDialog(async function (file) {
-              const options = {
-                maxSizeMB: 0.2,
-                useWebWorker: true,
-              };
-              try {
+        familyTreeRef.current.editUI.on('element-btn-click', function (sender, args) {
+          FamilyTree.fileUploadDialog(async function (file) {
+            const options = {
+              maxSizeMB: 0.2,
+              useWebWorker: true,
+            };
+            try {
+              toast({
+                title: "Uploading Image",
+                description: "We are uploading your image, wait for a moment",
+              })
+              const compressedFile = await imageCompression(file, options);
+              const imageUrl = await uploadPhoto(compressedFile);
+              let nodeId = args.nodeId;
+              updateFamilyMember(nodeId, { img: imageUrl }).then(() => {
                 toast({
-                  title: "Uploading Image",
-                  description: "We are uploading your image, wait for a moment",
+                  title: "Success",
+                  description: "Image uploaded successfully",
                 });
-                const compressedFile = await imageCompression(file, options);
-                const imageUrl = await uploadPhoto(compressedFile);
-                let nodeId = args.nodeId;
-                updateFamilyMember(nodeId, { img: imageUrl }).then(() => {
-                  toast({
-                    title: "Success",
-                    description: "Image uploaded successfully",
-                  });
-                });
-              } catch (error) {
-                console.error("Error compressing image: ", error);
-                toast({
-                  title: "Error",
-                  description: "Failed to compress image",
-                  variant: "destructive",
-                });
-              }
-            });
-          }
-        );
+              })
+            } catch (error) {
+              console.error("Error compressing image: ", error);
+              toast({
+                title: "Error",
+                description: "Failed to compress image",
+                variant: "destructive",
+              });
+            }
+          })
+        });
       } catch (err) {
         console.error("Error initializing family tree:", err);
       }
     }
   }, [nodes, loading]);
+
 
   const showPermissionToast = () => {
     toast({
