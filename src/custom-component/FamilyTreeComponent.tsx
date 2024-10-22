@@ -40,6 +40,24 @@ const FamilyTreeComponent: React.FC = () => {
       }
     }
     rootNodeSelector();
+
+    document.addEventListener("click", (e) => {
+    const searchElt = document.querySelector(".bft-search")
+    console.log("searchElt", searchElt)
+    if(searchElt){
+      const lastChild = searchElt.lastElementChild;
+      console.log("lastChild", lastChild)
+      if(lastChild){
+        const tr = lastChild.querySelectorAll("tr")
+        tr.forEach((el) => {
+          el.addEventListener("click", () => {
+            console.log("click")
+            lastChild.innerHTML = "";
+          })
+        });
+      }
+    }
+  })
   }, []);
 
   useEffect(() => {
@@ -92,6 +110,7 @@ const FamilyTreeComponent: React.FC = () => {
             field_3: "grandchildren",  // Add grandchildren information
             img_0: "img", // Bind image
           },
+          searchFields: ["name"],
           levelSeparation: 100,
           siblingSeparation: 50,
           subtreeSeparation: 100,
