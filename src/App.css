@@ -51,3 +51,8 @@
   pointer-events: all;
   cursor: pointer;
 }
+
+
+.bft-edit-form{
+  z-index: 20;
+}

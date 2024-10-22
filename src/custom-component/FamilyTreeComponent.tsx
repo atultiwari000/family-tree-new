@@ -118,6 +118,7 @@ const FamilyTreeComponent: React.FC = () => {
         familyTreeRef.current = f;
         familyTreeRef.current.onUpdateNode(handleEdit);
         familyTreeRef.current.editUI.on('element-btn-click', function (sender, args) {
+          if(args.event.target.innerHTML == "Upload"){
           FamilyTree.fileUploadDialog(async function (file) {
             const options = {
               maxSizeMB: 0.2,
@@ -146,6 +147,8 @@ const FamilyTreeComponent: React.FC = () => {
               });
             }
           })
+
+        }
         });
       } catch (err) {
         console.error("Error initializing family tree:", err);
@@ -309,12 +312,12 @@ const FamilyTreeComponent: React.FC = () => {
       <div className="flex-1 relative">
         <div
           className="w-full h-full"
-          style={{ height: "100vh" }}
+          style={{ height: "90dvh" }}
           ref={divRef}
         ></div>
         {!isSetting && (
           <Button
-            className="absolute bottom-4 left-3"
+            className="absolute bottom-7 left-3"
             onClick={() => setIsSetting(true)}
             variant="default"
             size="icon"
