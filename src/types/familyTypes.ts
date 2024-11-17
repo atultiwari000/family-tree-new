@@ -7,11 +7,13 @@ export interface FamilyMember {
     pids?: string[] | undefined;
     fid?: string[] | undefined;
     mid?: string[] | undefined;
-    gender?: string | undefined;
+  gender?: string | undefined;
+  treename?: string | undefined;
 }
 
 export interface AddMemberFormProps {
   onSubmit: (member: FamilyMember) => void;
   onCancel: () => void;
   existingNodes: FamilyMember[];
+  currentTreeName: string;
 }

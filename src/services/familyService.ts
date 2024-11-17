@@ -15,20 +15,19 @@ export const uploadPhoto = async (image: File) => {
 }
 
 export const addFamilyMember = async (newMember: FamilyMember, image: File | null) => {
-  let imageUrl = "";
-  if (image) {
-    const storageRef = ref(storage, `images/${Date.now()}_${image.name}`);
-    await uploadBytes(storageRef, image);
-    imageUrl = await getDownloadURL(storageRef);
-  }
-
   const memberToAdd: Partial<FamilyMember> = {
     name: newMember.name,
     gender: newMember.gender,
-    img: imageUrl || null,
     phone: newMember.phone,
     dob: newMember.dob,
+    treename: newMember.treename
   };
+
+  if (image) {
+    const storageRef = ref(storage, `images/${Date.now()}_${image.name}`);
+    await uploadBytes(storageRef, image);
+    memberToAdd.img = await getDownloadURL(storageRef);
+  }
 
   if (newMember.fid && newMember.fid.length) {
     memberToAdd.fid = newMember.fid;    
@@ -41,9 +40,9 @@ export const addFamilyMember = async (newMember: FamilyMember, image: File | nul
   }
 
   try {
-    const docRef = await addDoc(collection(db, "familyMembers"), memberToAdd);
-    if (newMember.pids && newMember.pids.length) {
-      await updateFamilyMember(newMember.pids[0], { pids: [docRef.id] });
+    const docRef = await addDoc(collection(db, "familyMembersTest"), memberToAdd);
+    if (newMember.pids && newMember.pids.length && newMember.pids[0]) {
+      await updateFamilyMember(newMember.pids[0], { pids: [...(memberToAdd.pids as string[]), docRef.id] });
     }
     return { ...memberToAdd, id: docRef.id };
   } catch (error) {
@@ -52,9 +51,20 @@ export const addFamilyMember = async (newMember: FamilyMember, image: File | nul
   }
 };
 
+export const getTreeNames = async () => {
+  try {
+    const treeNamesRef = collection(db, 'familyMembersTest');
+    const treeNamesSnapshot = await getDocs(treeNamesRef);
+    const treeNames = treeNamesSnapshot.docs.map(doc => doc.data().treename);
+    return treeNames;
+  } catch (error) {
+    console.error('Error getting tree names:', error);
+  }
+};
+
 export const updateFamilyMember = async (memberId: string, updates: Partial<FamilyMember>) => {
    try {
-    const memberRef = doc(db, "familyMembers", memberId);
+    const memberRef = doc(db, "familyMembersTest", memberId);
     const memberSnapshot = await getDoc(memberRef);
 
     const currentData = memberSnapshot.data();
@@ -71,7 +81,7 @@ export const updateFamilyMember = async (memberId: string, updates: Partial<Fami
 
 export const setFamilyMember = async (memberId: string, updates: Partial<FamilyMember>) => {
   try {
-    const memberRef = doc(db, "familyMembers", memberId);
+    const memberRef = doc(db, "familyMembersTest", memberId);
     await updateDoc(memberRef, updates);
   } catch (error) {
     console.error("Error setting document: ", error);
@@ -81,8 +91,8 @@ export const setFamilyMember = async (memberId: string, updates: Partial<FamilyM
 
 export const deleteFamilyMember = async (memberId: string) => {
   try {
-    const memberRef = doc(db, "familyMembers", memberId);
-    const memberSnapshot = await getDocs(collection(db, "familyMembers"));
+    const memberRef = doc(db, "familyMembersTest", memberId);
+    const memberSnapshot = await getDocs(collection(db, "familyMembersTest"));
     const memberToDelete = memberSnapshot.docs.find(doc => doc.id === memberId)?.data() as FamilyMember;
 
     if (memberToDelete.img) {
@@ -105,25 +115,25 @@ export const deleteFamilyMember = async (memberId: string) => {
 
 export const clearNoExistantData = async () => {
   try {
-    const querySnapshot = await getDocs(collection(db, "familyMembers"));
+    const querySnapshot = await getDocs(collection(db, "familyMembersTest"));
     querySnapshot.forEach(async (doc) => {
       const member = doc.data() as FamilyMember;
       if (member.fid?.length) {
-        const fatherSnapshot = await getDocs(collection(db, "familyMembers"));
+        const fatherSnapshot = await getDocs(collection(db, "familyMembersTest"));
         if (!fatherSnapshot.docs.find(father => father.id === member.fid[0])) {
           await setFamilyMember(doc.id, { fid: [] });
         }
       }
       if (member.mid?.length) {
-        const q = query(collection(db, "familyMembers"), where("capital", "==", true));
-        const motherSnapshot = await getDocs(collection(db, "familyMembers"));
+        const q = query(collection(db, "familyMembersTest"), where("capital", "==", true));
+        const motherSnapshot = await getDocs(collection(db, "familyMembersTest"));
 
         if (!motherSnapshot.docs.find(mother => mother.id === member.mid[0])) {
           await setFamilyMember(doc.id, { mid: [] });
         }
       }
       if (member.pids?.length) {
-        const partnerSnapshot = await getDocs(collection(db, "familyMembers"));
+        const partnerSnapshot = await getDocs(collection(db, "familyMembersTest"));
         const updatedPartners = member.pids.filter(partner => partnerSnapshot.docs.find(p => p.id === partner));
         const uniquePartners = [...new Set(updatedPartners)];
         if (updatedPartners.length === uniquePartners.length) {

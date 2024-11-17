@@ -15,11 +15,12 @@ import imageCompression from "browser-image-compression";
 import { useToast } from "@/hooks/use-toast";
 import ReactSelect from "react-select";
 
-const AddMemberForm: React.FC<AddMemberFormProps> = ({
+export default function AddMemberForm({
   onSubmit,
   onCancel,
   existingNodes,
-}) => {
+  currentTreeName,
+}: AddMemberFormProps) {
   const [name, setName] = useState("");
   const [gender, setGender] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -60,14 +61,15 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
         phone,
         dob,
         pids: partnerIds,
-        fid: fatherId && fatherId !== "unassigned" ? [fatherId] : [],
-        mid: motherId && motherId !== "unassigned" ? [motherId] : [],
+        fid: fatherId && fatherId !== "unassigned" ? [fatherId] : undefined,
+        mid: motherId && motherId !== "unassigned" ? [motherId] : undefined,
         img: null,
+        treename: currentTreeName,
       };
 
       const addedMember = await addFamilyMember(newMember, image);
       onSubmit(addedMember);
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === "permission-denied") {
         showPermissionToast();
       } else {
@@ -222,6 +224,4 @@ const AddMemberForm: React.FC<AddMemberFormProps> = ({
       </div>
     </form>
   );
-};
-
-export default AddMemberForm;
+}
