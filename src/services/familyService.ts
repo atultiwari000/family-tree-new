@@ -15,19 +15,25 @@ export const uploadPhoto = async (image: File) => {
 }
 
 export const addFamilyMember = async (newMember: FamilyMember, image: File | null) => {
+
+  let imageUrl = "";
+
+  if (image) {
+    const storageRef = ref(storage, `images/${Date.now()}_${image.name}`);
+    await uploadBytes(storageRef, image);
+    console.log("Image uploaded");
+    imageUrl = await getDownloadURL(storageRef);
+    console.log("Image URL: ", imageUrl);
+  }
+
   const memberToAdd: Partial<FamilyMember> = {
     name: newMember.name,
     gender: newMember.gender,
     phone: newMember.phone,
     dob: newMember.dob,
-    treename: newMember.treename
+    img: imageUrl || null,
+    treename: newMember.treename,
   };
-
-  if (image) {
-    const storageRef = ref(storage, `images/${Date.now()}_${image.name}`);
-    await uploadBytes(storageRef, image);
-    memberToAdd.img = await getDownloadURL(storageRef);
-  }
 
   if (newMember.fid && newMember.fid.length) {
     memberToAdd.fid = newMember.fid;    
@@ -41,8 +47,8 @@ export const addFamilyMember = async (newMember: FamilyMember, image: File | nul
 
   try {
     const docRef = await addDoc(collection(db, "familyMembersTest"), memberToAdd);
-    if (newMember.pids && newMember.pids.length && newMember.pids[0]) {
-      await updateFamilyMember(newMember.pids[0], { pids: [...(memberToAdd.pids as string[]), docRef.id] });
+    if (newMember.pids && newMember.pids.length) {
+      await updateFamilyMember(newMember.pids[0], { pids: [docRef.id] });
     }
     return { ...memberToAdd, id: docRef.id };
   } catch (error) {
@@ -176,6 +182,7 @@ export const getRootFamilyMember = async () => {
 export function getFamilyInfo(data: any, userId: string) {
   // Find the user by ID
   const user = data.find(member => member.id === userId);
+  console.log(user)
   
   // If user not found, return early with a message
   if (!user) {
@@ -186,11 +193,23 @@ export function getFamilyInfo(data: any, userId: string) {
   const findById = (id: number | undefined) => data.find(member => member.id === id);
 
   // Get the partner(s)
-  const partners = user.pids.map(findById).filter(Boolean); // Safely handle empty array
+  let partners = []
+  console.log(user.pids)
+  if(user.pids){
+    partners = user.pids.map(findById).filter(Boolean); // Safely handle empty array
+  }
 
   // Get the first parent IDs (from mid and fid arrays)
-  const motherId = user.mid[0]; // First element of mid array
-  const fatherId = user.fid[0]; // First element of fid array
+
+  let motherId;
+
+  if(user.mid){
+  motherId = user.mid[0]; // First element of mid array
+  }
+  let fatherId;
+  if(user.fid){
+    fatherId = user.fid[0];
+  }
 
   // Get children (those whose father or mother matches the user's ID)
   const children = data.filter(member => member.fid[0] === user.id || member.mid[0] === user.id);

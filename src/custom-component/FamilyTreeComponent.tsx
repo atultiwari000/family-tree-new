@@ -101,13 +101,15 @@ const FamilyTreeComponent: React.FC = () => {
     if (divRef.current && nodes.length > 0 && !loading) {
       clearNoExistantData();
       try {
-        if (familyTreeRef.current) {
-          familyTreeRef.current.destroy();
-          divRef.current.innerHTML = "";
-        }
+        // if (familyTreeRef.current) {
+        //   familyTreeRef.current.destroy();
+        //   divRef.current.innerHTML = "";
+        // }
+        console.log(nodes)
 
         const newNode = nodes.map((node) => {
           const familyInfo = getFamilyInfo(nodes, node.id);
+          console.log(familyInfo)
 
           const obj = {
             id: node.id,
@@ -119,6 +121,7 @@ const FamilyTreeComponent: React.FC = () => {
             children: familyInfo?.children.join(", ") ?? "",
             grandchildren: familyInfo?.grandchildren.join(", ") ?? "",
           };
+          
 
           if (node.img) {
             obj["img"] = node.img;
@@ -134,6 +137,7 @@ const FamilyTreeComponent: React.FC = () => {
           }
           return obj;
         });
+        console.log(newNode)
 
         const f = new FamilyTree(divRef.current, {
           nodes: newNode,
@@ -342,20 +346,20 @@ const FamilyTreeComponent: React.FC = () => {
       description: `New tree "${newTreeName}" created successfully`,
     });
 
-    if (familyTreeRef.current) {
-      familyTreeRef.current.destroy();
-      if (divRef.current) {
-        divRef.current.innerHTML = "";
-      }
-    }
+    // if (familyTreeRef.current) {
+    //   familyTreeRef.current.destroy();
+    //   if (divRef.current) {
+    //     divRef.current.innerHTML = "";
+    //   }
+    // }
 
-    familyTreeRef.current = new FamilyTree(divRef.current, {
-      nodes: [],
-      nodeBinding: {
-        field_0: "name",
-        img_0: "img",
-      },
-    });
+    // familyTreeRef.current = new FamilyTree(divRef.current, {
+    //   nodes: [],
+    //   nodeBinding: {
+    //     field_0: "name",
+    //     img_0: "img",
+    //   },
+    // });
   };
 
   if (loading) {

@@ -61,8 +61,8 @@ export default function AddMemberForm({
         phone,
         dob,
         pids: partnerIds,
-        fid: fatherId && fatherId !== "unassigned" ? [fatherId] : undefined,
-        mid: motherId && motherId !== "unassigned" ? [motherId] : undefined,
+        fid: fatherId && fatherId !== "unassigned" ? [fatherId] : [],
+        mid: motherId && motherId !== "unassigned" ? [motherId] : [],
         img: null,
         treename: currentTreeName,
       };

@@ -15,13 +15,16 @@ export const useFamilyTree = (treeName: string = "Default Tree") => {
   const [nodes, setNodes] = useState<FamilyMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  if(treeName.length == 0){
+    treeName = "Default Tree";
+  }
 
   const membersRef = collection(db, "familyMembersTest");
 
   const ensureCollectionExists = useCallback(async () => {
     try {
       const snapshot = await getDocs(query(membersRef, where("treename", "==", treeName)));
-
+      console.log("Snapshot:", snapshot);
       if (snapshot.empty) {
         const docRef = doc(membersRef); // Create a new document reference
         await setDoc(docRef, {
@@ -34,7 +37,7 @@ export const useFamilyTree = (treeName: string = "Default Tree") => {
           mid: [],
           pids: [],
         });
-        // console.log("Root member document created.");
+        console.log("Root member document created.");
       }
     } catch (err) {
       console.error("Error ensuring collection existence:", err);
@@ -44,21 +47,32 @@ export const useFamilyTree = (treeName: string = "Default Tree") => {
   }, [membersRef, treeName]);
 
   useEffect(() => {
-    if (!treeName) return;
-
     setLoading(true);
 
-    ensureCollectionExists()
-      .then(() => {
+    // ensureCollectionExists()
+      // .then(() => {
         const q = query(membersRef, where("treename", "==", treeName));
         const unsubscribe = onSnapshot(
           q,
           (querySnapshot) => {
-            const nodes = querySnapshot.docs.map((doc) => ({
+            const nodes = querySnapshot.docs.map((doc) => {
+              const data = doc.data()
+              return {
               id: doc.id,
-              ...doc.data(),
-            } as FamilyMember));
+              name: data.name || "",
+              gender: data.gender || "",
+              img: data.img || "",
+              dob: data.dob || "",
+              phone: data.phone || "",
+              pids: data.pids || [],
+              fid: data.fid || [],
+              mid: data.mid || [],
+              treename: data.treename || "",
+            } as FamilyMember
+            }
+          );
             setNodes(nodes);
+            console.log("Nodes:", nodes);
             setLoading(false);
           },
           (err) => {
@@ -69,13 +83,13 @@ export const useFamilyTree = (treeName: string = "Default Tree") => {
         );
 
         return () => unsubscribe();
-      })
-      .catch((err) => {
-        console.error("Error initializing family tree:", err);
-        setError("Failed to initialize family tree collection.");
-        setLoading(false);
-      });
-  }, [treeName, ensureCollectionExists]);
+      // })
+      // .catch((err) => {
+      //   console.error("Error initializing family tree:", err);
+      //   setError("Failed to initialize family tree collection.");
+      //   setLoading(false);
+      // });
+  }, [treeName]);
 
   return { nodes, loading, error };
 };
