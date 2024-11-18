@@ -59,9 +59,9 @@ export const addFamilyMember = async (newMember: FamilyMember, image: File | nul
 
 export const getTreeNames = async () => {
   try {
-    const rootMembersRef = collection(db, "rootFamilyMembers");
+    const rootMembersRef = collection(db, "familyMembersTest");
     const querySnapshot = await getDocs(rootMembersRef);
-    const treeNames = querySnapshot.docs.map(doc => doc.data().treeName);
+    const treeNames = querySnapshot.docs.map(doc => doc.data().treename);
     return [...new Set(treeNames)];
   } catch (error) {
     console.error('Error getting tree names:', error);
