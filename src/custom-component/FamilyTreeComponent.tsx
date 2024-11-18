@@ -105,11 +105,11 @@ const FamilyTreeComponent: React.FC = () => {
         //   familyTreeRef.current.destroy();
         //   divRef.current.innerHTML = "";
         // }
-        console.log(nodes)
+        console.log(nodes);
 
         const newNode = nodes.map((node) => {
           const familyInfo = getFamilyInfo(nodes, node.id);
-          console.log(familyInfo)
+          console.log(familyInfo);
 
           const obj = {
             id: node.id,
@@ -121,7 +121,6 @@ const FamilyTreeComponent: React.FC = () => {
             children: familyInfo?.children.join(", ") ?? "",
             grandchildren: familyInfo?.grandchildren.join(", ") ?? "",
           };
-          
 
           if (node.img) {
             obj["img"] = node.img;
@@ -137,7 +136,7 @@ const FamilyTreeComponent: React.FC = () => {
           }
           return obj;
         });
-        console.log(newNode)
+        console.log(newNode);
 
         const f = new FamilyTree(divRef.current, {
           nodes: newNode,
@@ -410,7 +409,7 @@ const FamilyTreeComponent: React.FC = () => {
                 <SelectValue placeholder="Select a tree" />
               </SelectTrigger>
               <SelectContent>
-                {treeNames.map((treeName) => (
+                {[...new Set(treeNames)].map((treeName) => (
                   <SelectItem key={treeName} value={treeName}>
                     {treeName}
                   </SelectItem>
