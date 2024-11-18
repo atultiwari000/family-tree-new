@@ -68,9 +68,9 @@ const FamilyTreeComponent: React.FC = () => {
 
   useEffect(() => {
     async function rootNodeSelector() {
-      const rootFamilyMember = await getRootFamilyMember();
-      if (rootFamilyMember.length > 0) {
-        setSelectedNode(rootFamilyMember[0].id);
+      if (selectedTreeName) {
+        const rootMemberId = await getRootFamilyMember(selectedTreeName);
+        setSelectedNode(rootMemberId);
       } else {
         setSelectedNode(null);
       }
@@ -95,7 +95,7 @@ const FamilyTreeComponent: React.FC = () => {
         }
       }
     });
-  }, []);
+  }, [selectedTreeName]);
 
   useEffect(() => {
     if (divRef.current && nodes.length > 0 && !loading) {
@@ -292,8 +292,8 @@ const FamilyTreeComponent: React.FC = () => {
   };
 
   const setRootNode = () => {
-    if (!familyTreeRef.current || !selectedNode) return;
-    setRootFamilyMember(selectedNode)
+    if (!familyTreeRef.current || !selectedNode || !selectedTreeName) return;
+    setRootFamilyMember(selectedNode, selectedTreeName)
       .then(() => {
         if (!familyTreeRef.current || !selectedNode) return;
         familyTreeRef.current.config.roots = [selectedNode];
@@ -409,7 +409,7 @@ const FamilyTreeComponent: React.FC = () => {
                 <SelectValue placeholder="Select a tree" />
               </SelectTrigger>
               <SelectContent>
-                {[...new Set(treeNames)].map((treeName) => (
+                {treeNames.map((treeName) => (
                   <SelectItem key={treeName} value={treeName}>
                     {treeName}
                   </SelectItem>

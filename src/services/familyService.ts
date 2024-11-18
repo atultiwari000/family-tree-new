@@ -59,10 +59,10 @@ export const addFamilyMember = async (newMember: FamilyMember, image: File | nul
 
 export const getTreeNames = async () => {
   try {
-    const treeNamesRef = collection(db, 'familyMembersTest');
-    const treeNamesSnapshot = await getDocs(treeNamesRef);
-    const treeNames = treeNamesSnapshot.docs.map(doc => doc.data().treename);
-    return treeNames;
+    const rootMembersRef = collection(db, "rootFamilyMembers");
+    const querySnapshot = await getDocs(rootMembersRef);
+    const treeNames = querySnapshot.docs.map(doc => doc.data().treeName);
+    return [...new Set(treeNames)];
   } catch (error) {
     console.error('Error getting tree names:', error);
   }
@@ -155,24 +155,34 @@ export const clearNoExistantData = async () => {
   }
 };
 
-export const setRootFamilyMember = async (memberId: string) => {
+export const setRootFamilyMember = async (memberId: string, treeName: string) => {
   try {
-    const rootFamilyMembers = collection(db, "rootFamilyMembers");
-    const querySnapshot = await getDocs(rootFamilyMembers);
-    querySnapshot.forEach((doc) => {
-      deleteDoc(doc.ref);
-    });
-    await addDoc(collection(db, "rootFamilyMembers"), { id: memberId });
+    const rootMembersRef = collection(db, "rootFamilyMembers");
+    const q = query(rootMembersRef, where("treeName", "==", treeName));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      await addDoc(rootMembersRef, { treeName, rootMemberId: memberId });
+    } else {
+      const docRef = doc(db, "rootFamilyMembers", querySnapshot.docs[0].id);
+      await updateDoc(docRef, { rootMemberId: memberId });
+    }
   } catch (error) {
     console.error("Error setting root family member: ", error);
     throw error;
   }
 }
 
-export const getRootFamilyMember = async () => {
+export const getRootFamilyMember = async (treeName: string) => {
   try {
-    const querySnapshot = await getDocs(collection(db, "rootFamilyMembers"));
-    return querySnapshot.docs.map((doc) => doc.data());
+    const rootMembersRef = collection(db, "rootFamilyMembers");
+    const q = query(rootMembersRef, where("treeName", "==", treeName));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      return querySnapshot.docs[0].data().rootMemberId;
+    }
+    return null;
   } catch (error) {
     console.error("Error getting root family member: ", error);
     throw error;
