@@ -68,6 +68,29 @@ export const getTreeNames = async () => {
   }
 };
 
+export const deleteTree = async (treeName: string) => {
+  try {
+    const rootMembersRef = collection(db, "rootFamilyMembers");
+    const q = query(rootMembersRef, where("treeName", "==", treeName));
+    const querySnapshot = await getDocs(q);
+
+    if (!querySnapshot.empty) {
+      await deleteDoc(doc(db, "rootFamilyMembers", querySnapshot.docs[0].id));
+    }
+
+    const familyMembersRef = collection(db, "familyMembersTest");
+    const familyMembersSnapshot = await getDocs(familyMembersRef);
+    familyMembersSnapshot.forEach(async doc => {
+      if (doc.data().treename === treeName) {
+        await deleteFamilyMember(doc.id);
+      }
+    });
+  } catch (error) {
+    console.error('Error deleting tree:', error);
+  }
+}
+
+
 export const updateFamilyMember = async (memberId: string, updates: Partial<FamilyMember>) => {
    try {
     const memberRef = doc(db, "familyMembersTest", memberId);

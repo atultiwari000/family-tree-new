@@ -12,10 +12,11 @@ import {
   getFamilyInfo,
   clearNoExistantData,
   getTreeNames,
+  deleteTree,
 } from "@/services/familyService";
 // import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
-import { GearIcon, Cross1Icon } from "@radix-ui/react-icons";
+import { GearIcon, Cross1Icon, TrashIcon } from "@radix-ui/react-icons";
 import { useToast } from "@/hooks/use-toast";
 import imageCompression from "browser-image-compression";
 import {
@@ -291,6 +292,29 @@ const FamilyTreeComponent: React.FC = () => {
     setIsAddFormOpen(true);
   };
 
+  const handleDeleteTree = async () => {
+    if (!selectedTreeName) return;
+
+    try {
+      await deleteTree(selectedTreeName);
+      toast({
+        title: "Success",
+        description: `Tree "${selectedTreeName}" deleted successfully`,
+      });
+      setTreeNames((prevNames) =>
+        prevNames.filter((name) => name !== selectedTreeName)
+      );
+      setSelectedTreeName("");
+    } catch (error) {
+      console.error("Error deleting tree:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete tree",
+        variant: "destructive",
+      });
+    }
+  }
+
   const setRootNode = () => {
     if (!familyTreeRef.current || !selectedNode || !selectedTreeName) return;
     setRootFamilyMember(selectedNode, selectedTreeName)
@@ -401,21 +425,31 @@ const FamilyTreeComponent: React.FC = () => {
             >
               Select Tree:
             </label>
-            <Select
-              value={selectedTreeName}
-              onValueChange={setSelectedTreeName}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a tree" />
-              </SelectTrigger>
-              <SelectContent>
-                {treeNames.map((treeName) => (
-                  <SelectItem key={treeName} value={treeName}>
-                    {treeName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2">
+              <Select
+                value={selectedTreeName}
+                onValueChange={setSelectedTreeName}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a tree" />
+                </SelectTrigger>
+                <SelectContent>
+                  {treeNames.map((treeName) => (
+                    <SelectItem key={treeName} value={treeName}>
+                      {treeName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                variant="default"
+                className="w-12"
+                size="icon"
+                onClick={handleDeleteTree}
+              >
+                <TrashIcon />
+              </Button>
+            </div>
           </div>
           <Button
             onClick={() => setIsNewTreeDialogOpen(true)}
