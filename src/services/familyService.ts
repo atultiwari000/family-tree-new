@@ -90,6 +90,42 @@ export const deleteTree = async (treeName: string) => {
   }
 }
 
+export const downLoadFamilyMembersToTxt = async () => {
+  try {
+    // format
+    /*
+    treeName1
+    name1
+    name2
+
+    treeName2
+    name1
+    ...
+    */
+    const familyMembersRef = collection(db, "familyMembersTest");
+    const familyMembersSnapshot = await getDocs(familyMembersRef);
+    const familyMembers = familyMembersSnapshot.docs.map(doc => doc.data() as FamilyMember);
+
+    const treeNames = [...new Set(familyMembers.map(member => member.treename))];
+    const txtData = treeNames.map(treeName => {
+      const members = familyMembers.filter(member => member.treename === treeName);
+      const memberNames = members.map(member => member.name);
+      return [treeName, ...memberNames];
+    });
+
+    const txt = txtData.map(data => data.join("\n")).join("\n\n");
+    const blob = new Blob([txt], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "familyMembers.txt";
+    a.click();
+    
+  } catch (error) {
+    console.error("Error downloading family members to CSV: ", error);
+  }
+}
+
 
 export const updateFamilyMember = async (memberId: string, updates: Partial<FamilyMember>) => {
    try {

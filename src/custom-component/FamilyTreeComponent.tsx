@@ -13,6 +13,7 @@ import {
   clearNoExistantData,
   getTreeNames,
   deleteTree,
+  downLoadFamilyMembersToTxt,
 } from "@/services/familyService";
 // import { FamilyMember } from "@/types/familyTypes";
 import useFamilyStore from "@/store/globalFamily";
@@ -34,6 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DownloadIcon } from "lucide-react";
 
 const FamilyTreeComponent: React.FC = () => {
   const divRef = useRef<HTMLDivElement>(null);
@@ -450,7 +452,16 @@ const FamilyTreeComponent: React.FC = () => {
                 <TrashIcon />
               </Button>
             </div>
+            <Button
+                variant="default"
+                className="absolute bottom-7 left-3 p-[10px]"
+                size="icon"
+                onClick={()=> downLoadFamilyMembersToTxt()}
+              >
+                <DownloadIcon/>
+              </Button>
           </div>
+
           <Button
             onClick={() => setIsNewTreeDialogOpen(true)}
             className="w-full"
