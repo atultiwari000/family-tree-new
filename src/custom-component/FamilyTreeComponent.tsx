@@ -51,6 +51,8 @@ const FamilyTreeComponent: React.FC = () => {
   const [treeNames, setTreeNames] = useState<string[]>([]);
   const { nodes, loading, error } = useFamilyTree(selectedTreeName);
   const [isNewTreeDialogOpen, setIsNewTreeDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [newTreeName, setNewTreeName] = useState("");
 
   useEffect(() => {
@@ -298,7 +300,7 @@ const FamilyTreeComponent: React.FC = () => {
     if (!selectedTreeName) return;
 
     try {
-      await deleteTree(selectedTreeName);
+      await deleteTree(selectedTreeName, deleteConfirmation);
       toast({
         title: "Success",
         description: `Tree "${selectedTreeName}" deleted successfully`,
@@ -307,15 +309,17 @@ const FamilyTreeComponent: React.FC = () => {
         prevNames.filter((name) => name !== selectedTreeName)
       );
       setSelectedTreeName("");
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmation("");
     } catch (error) {
       console.error("Error deleting tree:", error);
       toast({
         title: "Error",
-        description: "Failed to delete tree",
+        description: error.message || "Failed to delete tree",
         variant: "destructive",
       });
     }
-  }
+  };
 
   const setRootNode = () => {
     if (!familyTreeRef.current || !selectedNode || !selectedTreeName) return;
@@ -332,23 +336,6 @@ const FamilyTreeComponent: React.FC = () => {
 
   const handleFormSubmit = async () => {
     setIsAddFormOpen(false);
-    // try {
-    //   const addedMember = await addFamilyMember(newMember, null);
-    //   if (familyTreeRef.current) {
-    //     familyTreeRef.current.addNode(addedMember);
-    //   }
-    //   toast({
-    //     title: "Success",
-    //     description: "New family member added successfully",
-    //   });
-    // } catch (error) {
-    //   console.error("Error adding family member:", error);
-    //   toast({
-    //     title: "Error",
-    //     description: "Failed to add family member",
-    //     variant: "destructive",
-    //   });
-    // }
   };
 
   const createNewTree = () => {
@@ -443,23 +430,69 @@ const FamilyTreeComponent: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
+
               <Button
                 variant="default"
                 className="w-12"
                 size="icon"
-                onClick={handleDeleteTree}
+                onClick={() => setIsDeleteDialogOpen(true)}
               >
                 <TrashIcon />
               </Button>
+              <Dialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+              >
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Delete Tree Confirmation</DialogTitle>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <p>
+                      Are you sure you want to delete the tree "
+                      {selectedTreeName}"?
+                    </p>
+                    <p>
+                      This action is irreversible. Please type the tree name to
+                      confirm:
+                    </p>
+                    <Input
+                      type="text"
+                      placeholder="Enter tree name to confirm"
+                      value={deleteConfirmation}
+                      onChange={(e) => setDeleteConfirmation(e.target.value)}
+                      className="mt-2"
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      onClick={() => {
+                        setIsDeleteDialogOpen(false);
+                        setDeleteConfirmation("");
+                      }}
+                      variant="outline"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleDeleteTree}
+                      disabled={deleteConfirmation !== selectedTreeName}
+                      variant="destructive"
+                    >
+                      Delete Tree
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </div>
             <Button
-                variant="default"
-                className="absolute bottom-7 left-3 p-[10px]"
-                size="icon"
-                onClick={()=> downLoadFamilyMembersToTxt()}
-              >
-                <DownloadIcon/>
-              </Button>
+              variant="default"
+              className="absolute bottom-7 left-3 p-[10px]"
+              size="icon"
+              onClick={() => downLoadFamilyMembersToTxt()}
+            >
+              <DownloadIcon />
+            </Button>
           </div>
 
           <Button
